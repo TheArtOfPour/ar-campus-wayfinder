@@ -158,10 +158,54 @@ async function loadLocations() {
     console.error('Error loading locations:', error);
     // Return default sample data if fetch fails
     return [
-      { id: 'building-a', name: 'Science Building', lat: 51.0505, lng: -0.72, icon: null },
-      { id: 'building-b', name: 'Library', lat: 51.0510, lng: -0.721, icon: null },
-      { id: 'building-c', name: 'Student Center', lat: 51.0498, lng: -0.719, icon: null },
-      { id: 'field', name: 'Sports Field', lat: 51.0492, lng: -0.722, icon: null }
+      {
+        "id": "building-a",
+        "name": "HC",
+        "lat": 48.76493902606986,
+        "lng": -122.5102771303933,
+        "description": "Haskell Center",
+        "icon": null
+      },
+      {
+        "id": "building-b",
+        "name": "CS",
+        "lat": 48.76517874251886,
+        "lng": -122.5090488989137,
+        "description": "College Services",
+        "icon": null
+      },
+      {
+        "id": "building-c",
+        "name": "CC",
+        "lat": 48.76562014758625,
+        "lng": -122.51045768889969,
+        "description": "Campus Center",
+        "icon": null
+      },
+      {
+        "id": "field",
+        "name": "MC",
+        "lat": 48.766928218600846,
+        "lng": -122.50853234258545,
+        "description": "",
+        "icon": null
+      },
+      {
+        "id": "auditorium",
+        "name": "DMC",
+        "lat": 48.765794902908155,
+        "lng": -122.50860865204304,
+        "description": "",
+        "icon": null
+      },
+      {
+        "id": "engineering",
+        "name": "A",
+        "lat": 48.765686889960215,
+        "lng": -122.51286437179239,
+        "description": "",
+        "icon": null
+      }
     ];
   }
 }
@@ -191,6 +235,19 @@ async function initAR() {
       pois[location.id] = marker;
       scene.add(marker);
     });
+    
+    // Listen for GPS position updates and update POI positions
+    currentLocAR.addEventListener('gpsupdate', (ev) => {
+      updatePOIPositions();
+    });
+    
+    // Handle GPS errors
+    currentLocAR.addEventListener('gpserror', (error) => {
+      console.warn('GPS error:', error);
+    });
+    
+    // Start GPS tracking (must be called after app.start())
+    await currentLocAR.startGps();
     
     console.log('AR app initialized with', locations.length, 'POIs');
     
@@ -279,6 +336,9 @@ export async function init() {
   try {
     const { currentLocAR: locarInstance } = await initAR();
     
+    // Check if GPS is working properly
+    checkGPSStatus();
+    
     // Set up event listeners
     document.getElementById('search-input').addEventListener('input', (e) => {
       const query = e.target.value.trim().toLowerCase();
@@ -326,3 +386,21 @@ export async function init() {
 
 // Expose init globally
 window.initARApp = init;
+
+// Check GPS status and show permission notice if needed
+function checkGPSStatus() {
+  const container = document.createElement('div');
+  container.id = 'gps-permission-notice';
+  container.className = 'gps-permission-container';
+  container.innerHTML = `
+    <h4>GPS Permissions Required</h4>
+    <p style="margin:0; font-size:13px;">Please allow GPS access when prompted by your browser.</p>
+    <button onclick="document.getElementById('gps-permission-notice').remove()" style="margin-top:8px;padding:6px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Got it</button>
+  `;
+  
+  // Remove after 3 seconds if GPS is working (approximate check)
+  setTimeout(() => {
+    const notice = document.getElementById('gps-permission-notice');
+    if (notice) notice.remove();
+  }, 5000);
+}
