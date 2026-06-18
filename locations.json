@@ -1,50 +1,50 @@
 [
   {
     "id": "building-a",
-    "name": "Science Building",
-    "lat": 51.0505,
-    "lng": -0.72,
-    "description": "Home to the Physics and Mathematics departments.",
+    "name": "HC",
+    "lat": 48.76493902606986,
+    "lng": -122.5102771303933,
+    "description": "Haskell Center",
     "icon": null
   },
   {
     "id": "building-b",
-    "name": "Library",
-    "lat": 51.0510,
-    "lng": -0.721,
-    "description": "Main campus library with study spaces and resources.",
+    "name": "CS",
+    "lat": 48.76517874251886,
+    "lng": -122.5090488989137,
+    "description": "College Services",
     "icon": null
   },
   {
     "id": "building-c",
-    "name": "Student Center",
-    "lat": 51.0498,
-    "lng": -0.719,
-    "description": "Student union with cafeteria, lounges, and event spaces.",
+    "name": "CC",
+    "lat": 48.76562014758625,
+    "lng": -122.51045768889969,
+    "description": "Campus Center",
     "icon": null
   },
   {
     "id": "field",
-    "name": "Sports Field",
-    "lat": 51.0492,
-    "lng": -0.722,
-    "description": "Large sports field for soccer, football, and other activities.",
+    "name": "MC",
+    "lat": 48.766928218600846,
+    "lng": -122.50853234258545,
+    "description": "",
     "icon": null
   },
   {
     "id": "auditorium",
-    "name": "Main Auditorium",
-    "lat": 51.0489,
-    "lng": -0.723,
-    "description": "Performance venue hosting concerts, plays, and lectures.",
+    "name": "DMC",
+    "lat": 48.765794902908155,
+    "lng": -122.50860865204304,
+    "description": "",
     "icon": null
   },
   {
     "id": "engineering",
-    "name": "Engineering Block",
-    "lat": 51.0515,
-    "lng": -0.718,
-    "description": "Faculty of Engineering laboratories and classrooms.",
+    "name": "A",
+    "lat": 48.765686889960215,
+    "lng": -122.51286437179239,
+    "description": "",
     "icon": null
   }
 ]
