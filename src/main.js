@@ -30,8 +30,8 @@ function createScene(app) {
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
   
-  // Main marker - floating circle above the ground
-  const radius = isHighlighted ? 0.8 : 0.5;
+  // Main marker - floating circle above the ground (lowered for better visibility)
+  const radius = isHighlighted ? 0.5 : 0.3;
   const geometry = new THREE.CircleGeometry(radius, 32);
   
   const color = isHighlighted ? 0x4facfe : 0x00f260;
@@ -53,17 +53,17 @@ function createPOIMarker(location, isHighlighted = false) {
   dot.position.y = radius;
   group.add(dot);
   
-  // Create text sprite for the location name
+  // Create text sprite for the location name (lowered position)
   if (location.name) {
     const textSprite = createTextSprite(location.name, isHighlighted ? '#ffffff' : '#000000');
-    textSprite.position.set(0, radius + 1.2, 0);
+    textSprite.position.set(0, radius + 0.6, 0);
     group.add(textSprite);
   }
   
-  // Add optional icon
+  // Add optional icon (lowered position)
   if (location.icon) {
     const iconSprite = createIconSprite(location.icon);
-    iconSprite.position.set(radius * 0.6, radius - 0.2, 0);
+    iconSprite.position.set(radius * 0.6, radius - 0.1, 0);
     group.add(iconSprite);
   }
   

@@ -32,7 +32,62 @@
       position: absolute;
       z-index: 10;
       width: 100%;
-      pointer-events: none; /* Let clicks pass through to AR scene where no UI elements exist */
+      pointer-events: none;
+    }
+    
+    /* Start button overlay - must be clicked before AR starts */
+    .start-button-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    
+    .start-button {
+      padding: 20px 40px;
+      font-size: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .start-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+    }
+    
+    .start-button:active {
+      transform: scale(0.98);
+    }
+    
+    .start-info {
+      max-width: 400px;
+      text-align: center;
+      padding: 0 20px;
+      margin-bottom: 30px;
+    }
+    
+    .start-info h1 {
+      font-size: 32px;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+    
+    .start-info p {
+      line-height: 1.6;
+      color: #ddd;
     }
     
     /* Search bar container */
@@ -93,25 +148,26 @@
     
     /* Location info panel */
     .location-info-container {
-      bottom: 30px;
+      bottom: 15px;
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
-      max-width: 400px;
+      max-width: 360px;
       pointer-events: auto;
     }
     
     .location-panel {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
-      padding: 20px;
+      padding: 15px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     }
     
     .location-panel h3 {
-      font-size: 20px;
-      margin-bottom: 10px;
+      font-size: 16px;
+      margin-bottom: 8px;
       color: #333;
+      line-height: 1.2;
     }
     
     .location-info-content {
@@ -121,8 +177,8 @@
     }
     
     .location-icon {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -130,19 +186,19 @@
     }
     
     .location-details p {
-      font-size: 14px;
+      font-size: 13px;
       color: #666;
       margin-bottom: 5px;
     }
     
     .reset-button {
-      margin-top: 15px;
-      padding: 10px 20px;
+      margin-top: 12px;
+      padding: 10px 16px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -200,13 +256,13 @@
       margin-bottom: 10px;
     }
     
-    /* Info button */
+    /* Info button - moved to left side */
     .info-button {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 50px;
-      height: 50px;
+      top: 15px;
+      left: 15px;
+      width: 44px;
+      height: 44px;
       background: rgba(255, 255, 255, 0.9);
       border-radius: 50%;
       border: none;
@@ -220,14 +276,14 @@
     
     .info-panel {
       position: absolute;
-      top: 80px;
-      right: 20px;
-      width: 300px;
-      max-height: 300px;
+      top: 70px;
+      left: 15px;
+      width: 280px;
+      max-height: 40vh;
       overflow-y: auto;
       background: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
-      padding: 20px;
+      padding: 16px;
       display: none;
     }
     
@@ -237,20 +293,26 @@
     
     /* Responsive adjustments */
     @media (max-width: 480px) {
+      .start-info h1 { font-size: 24px; }
       .search-input { padding: 12px 16px; font-size: 14px; }
-      .location-panel { padding: 15px; }
+      .location-panel { padding: 12px; bottom: 10px; }
+      .info-button { top: 10px; left: 10px; width: 38px; height: 38px; font-size: 20px; }
+      .info-panel { top: 60px; left: 10px; width: 90%; }
     }
   </style>
 </head>
 <body>
-  <!-- Loading overlay -->
-  <div class="loading-overlay" id="loading">
-    <div class="loading-spinner"></div>
-    <p>Initializing AR...</p>
+  <!-- Start button overlay - must click to start AR -->
+  <div class="start-button-container" id="start-overlay">
+    <div class="start-info">
+      <h1>Campus Wayfinder</h1>
+      <p>Explore your campus with augmented reality! Tap below to enable camera, GPS, and orientation sensors.</p>
+    </div>
+    <button class="start-button" onclick="window.startARApp()">Start AR Experience</button>
   </div>
   
-  <!-- Info button -->
-  <button class="info-button" onclick="toggleInfoPanel()">?</button>
+  <!-- Info button - hidden until start is clicked -->
+  <button class="info-button" onclick="toggleInfoPanel()" style="display:none;">?</button>
   <div class="ui-overlay">
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search locations..." autocomplete="off">
@@ -273,10 +335,10 @@
       
       <h3>How to use:</h3>
       <ol style="margin-left: 20px; margin-top: 10px;">
-        <li>Allow access to camera, GPS, and orientation sensors when prompted</li>
+        <li>Tap "Start AR Experience" to enable sensors</li>
+        <li>Allow camera, GPS, and orientation permissions when prompted</li>
         <li>Look around to see POIs in the real world</li>
         <li>Use the search bar to find specific locations</li>
-        <li>Select a location to focus on it</li>
       </ol>
       
       <h3>Tips:</h3>
@@ -312,26 +374,32 @@
   <script type="module">
     import { init as initApp } from './src/main.js';
     
-    // Initialize the app when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
+    // Global start function - must be called from user gesture
+    window.startARApp = async function() {
       const loading = document.getElementById('loading');
+      const startOverlay = document.getElementById('start-overlay');
       
-      // Show a message about permissions needed
-      if (!window.isSecureContext) {
-        loading.innerHTML = '<div class="error-container"><h2>HTTPS Required</h2><p>This app requires HTTPS or localhost to access device sensors and camera.</p><p>Please use:</p><ul style="text-align:left;"><li>A local development server (vite dev)</li><li>A secure hosting service (GitHub Pages, Vercel, etc.)</li></ul></div>';
-        return;
+      if (loading) {
+        loading.style.display = 'flex';
+      }
+      if (startOverlay) {
+        startOverlay.style.display = 'none';
       }
       
-      // Start the app
-      initApp()
-        .then(() => {
-          loading.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Init error:', error);
-          loading.innerHTML = '<div class="error-container"><h2>AR Initialization Failed</h2><p>' + error.message + '</p></div>';
-        });
-    });
+      // Show UI elements
+      const infoButton = document.querySelector('.info-button');
+      if (infoButton) infoButton.style.display = 'block';
+      
+      try {
+        await initApp();
+        if (loading) loading.style.display = 'none';
+      } catch (error) {
+        console.error('Init error:', error);
+        if (loading) {
+          loading.innerHTML = '<div class="error-container"><h2>AR Initialization Failed</h2><p>' + error.message + '</p><p style="font-size:14px;margin-top:10px;">Ensure you are on HTTPS and have granted all permissions.</p></div>';
+        }
+      }
+    };
     
     // Global functions for UI
     window.toggleInfoPanel = function() {
@@ -339,5 +407,11 @@
       panel.classList.toggle('active');
     };
   </script>
+  
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading" style="display:none">
+    <div class="loading-spinner"></div>
+    <p>Initializing AR...</p>
+  </div>
 </body>
 </html>
