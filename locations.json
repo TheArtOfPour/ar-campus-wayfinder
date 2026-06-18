@@ -1,0 +1,50 @@
+[
+  {
+    "id": "building-a",
+    "name": "Science Building",
+    "lat": 51.0505,
+    "lng": -0.72,
+    "description": "Home to the Physics and Mathematics departments.",
+    "icon": null
+  },
+  {
+    "id": "building-b",
+    "name": "Library",
+    "lat": 51.0510,
+    "lng": -0.721,
+    "description": "Main campus library with study spaces and resources.",
+    "icon": null
+  },
+  {
+    "id": "building-c",
+    "name": "Student Center",
+    "lat": 51.0498,
+    "lng": -0.719,
+    "description": "Student union with cafeteria, lounges, and event spaces.",
+    "icon": null
+  },
+  {
+    "id": "field",
+    "name": "Sports Field",
+    "lat": 51.0492,
+    "lng": -0.722,
+    "description": "Large sports field for soccer, football, and other activities.",
+    "icon": null
+  },
+  {
+    "id": "auditorium",
+    "name": "Main Auditorium",
+    "lat": 51.0489,
+    "lng": -0.723,
+    "description": "Performance venue hosting concerts, plays, and lectures.",
+    "icon": null
+  },
+  {
+    "id": "engineering",
+    "name": "Engineering Block",
+    "lat": 51.0515,
+    "lng": -0.718,
+    "description": "Faculty of Engineering laboratories and classrooms.",
+    "icon": null
+  }
+]

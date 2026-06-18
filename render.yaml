@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: ar-campus-wayfinder
+    buildCommand: npm install && npm run build
+    staticOutputDir: dist

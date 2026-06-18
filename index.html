@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <title>AR Campus Wayfinder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      overflow: hidden;
+      background: #000;
+    }
+    
+    /* AR Scene container */
+    #ar-scene-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    /* UI Overlay */
+    .ui-overlay {
+      position: absolute;
+      z-index: 10;
+      width: 100%;
+      pointer-events: none; /* Let clicks pass through to AR scene where no UI elements exist */
+    }
+    
+    /* Search bar container */
+    .search-container {
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      pointer-events: auto;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 30px;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      font-size: 16px;
+      outline: none;
+    }
+    
+    .search-input::placeholder {
+      color: #666;
+    }
+    
+    /* Search results dropdown */
+    .search-results-container {
+      position: absolute;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .search-result-item {
+      padding: 15px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      transition: background 0.2s;
+    }
+    
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    
+    .search-result-item:hover {
+      background: #f0f0f0;
+    }
+    
+    /* Location info panel */
+    .location-info-container {
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      pointer-events: auto;
+    }
+    
+    .location-panel {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .location-panel h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .location-info-content {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .location-icon {
+      width: 48px;
+      height: 48px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      border-radius: 8px;
+    }
+    
+    .location-details p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .reset-button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .reset-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Loading overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Permissions error message */
+    .error-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 400px;
+      padding: 20px;
+      background: rgba(255, 238, 221, 0.95);
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    .error-container h2 {
+      color: #e64a19;
+      margin-bottom: 10px;
+    }
+    
+    /* Info button */
+    .info-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .info-panel {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      width: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      display: none;
+    }
+    
+    .info-panel.active {
+      display: block;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .search-input { padding: 12px 16px; font-size: 14px; }
+      .location-panel { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading">
+    <div class="loading-spinner"></div>
+    <p>Initializing AR...</p>
+  </div>
+  
+  <!-- Info button -->
+  <button class="info-button" onclick="toggleInfoPanel()">?</button>
+  <div class="ui-overlay">
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Search locations..." autocomplete="off">
+    </div>
+    
+    <div class="search-results-container" id="search-results"></div>
+    
+    <div class="location-info-container">
+      <div class="location-panel" id="location-info">
+        <h3>Campus Wayfinder</h3>
+        <p style="margin-top: 10px;">Select a location on the map or search to find buildings and points of interest.</p>
+        <button class="reset-button" onclick="window.app.resetToAll()" style="display:none" id="show-all-btn">View All Locations</button>
+      </div>
+    </div>
+    
+    <!-- Info panel -->
+    <div class="info-panel" id="info-panel">
+      <h2>About this App</h2>
+      <p>This AR Campus Wayfinder uses LocAR.js and A-Frame to display points of interest based on your GPS location.</p>
+      
+      <h3>How to use:</h3>
+      <ol style="margin-left: 20px; margin-top: 10px;">
+        <li>Allow access to camera, GPS, and orientation sensors when prompted</li>
+        <li>Look around to see POIs in the real world</li>
+        <li>Use the search bar to find specific locations</li>
+        <li>Select a location to focus on it</li>
+      </ol>
+      
+      <h3>Tips:</h3>
+      <ul style="margin-left: 20px; margin-top: 10px;">
+        <li>Make sure GPS is enabled and you have a strong signal</li>
+        <li>Calibrate your device's compass if POIs appear offset</li>
+        <li>The app works best in open areas with clear sky visibility</li>
+      </ul>
+      
+      <button class="reset-button" onclick="toggleInfoPanel()" style="margin-top: 15px;">Close</button>
+    </div>
+  </div>
+  
+  <!-- A-Frame scene container -->
+  <div id="ar-scene-container">
+    <!-- Scene will be initialized here by main.js -->
+  </div>
+  
+  <!-- Import map for modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.175.0/build/three.module.js",
+        "locar": "https://unpkg.com/locar@0.2.2/dist/locar.js"
+      }
+    }
+  </script>
+  
+  <!-- A-Frame library -->
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  
+  <!-- Main application code -->
+  <script type="module">
+    import { init as initApp } from './src/main.js';
+    
+    // Initialize the app when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const loading = document.getElementById('loading');
+      
+      // Show a message about permissions needed
+      if (!window.isSecureContext) {
+        loading.innerHTML = '<div class="error-container"><h2>HTTPS Required</h2><p>This app requires HTTPS or localhost to access device sensors and camera.</p><p>Please use:</p><ul style="text-align:left;"><li>A local development server (vite dev)</li><li>A secure hosting service (GitHub Pages, Vercel, etc.)</li></ul></div>';
+        return;
+      }
+      
+      // Start the app
+      initApp()
+        .then(() => {
+          loading.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Init error:', error);
+          loading.innerHTML = '<div class="error-container"><h2>AR Initialization Failed</h2><p>' + error.message + '</p></div>';
+        });
+    });
+    
+    // Global functions for UI
+    window.toggleInfoPanel = function() {
+      const panel = document.getElementById('info-panel');
+      panel.classList.toggle('active');
+    };
+  </script>
+</body>
+</html>

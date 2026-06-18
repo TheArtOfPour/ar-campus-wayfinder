@@ -1,0 +1,15 @@
+# Static Site Configuration for Render
+
+# The build command that generates the static files
+build: npm install && npm run build
+
+# The directory containing the built static files (relative to project root)
+staticPublishPath: ./dist
+
+# Optional: Custom 404 page
+# errorPage: ./dist/404.html
+
+# Optional: Environment variables (if needed for your app)
+# envVars:
+#   - key: NODE_VERSION
+#     value: 18
