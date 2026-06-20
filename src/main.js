@@ -158,7 +158,8 @@ async function initAR() {
       const needleEl = document.getElementById('compass-needle');
       if (needleEl) {
         // Rotate the compass needle based on device heading
-        needleEl.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+        // Use rotateZ to append rotation without overriding transform-origin
+        needleEl.style.transform = `translate(-50%, -50%) rotate(${360 - heading}deg)`;
       }
     }
     
