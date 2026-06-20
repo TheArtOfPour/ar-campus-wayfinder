@@ -240,6 +240,12 @@ async function initAR() {
     // Load locations
     const loadedLocations = await loadLocations();
     locations = loadedLocations;
+    
+    // Debug: Log loaded locations
+    console.log('=== Loaded Locations ===');
+    locations.forEach(loc => {
+      console.log(`ID: ${loc.id}, Name: ${loc.name}, Lat: ${loc.lat}, Lng: ${loc.lng}`);
+    });
 
     // Create POI markers for each location
     locations.forEach(location => {
