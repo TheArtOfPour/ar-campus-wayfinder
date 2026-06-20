@@ -2,9 +2,17 @@
   {
     "id": "H",
     "name": "HaL",
-    "lat": 48.711920,
-    "lng": -122.491269,
+    "lat": 48.711420,
+    "lng": -122.490614,
     "description": "HL",
+    "icon": null
+  },
+  {
+    "id": "R",
+    "name": "R",
+    "lat": 48.713675,
+    "lng": -122.489330,
+    "description": "R",
     "icon": null
   }
 ]

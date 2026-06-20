@@ -255,10 +255,12 @@ async function initAR() {
 
       // Store the marker and its location reference
       pois[location.id] = marker;
-      scene.add(marker);
+    
+      // Use locar.add() to properly position POIs - this handles GPS to 3D conversion internally
+      currentLocAR.add(marker, location.lng, location.lat);
     });
 
-    // Start GPS tracking (must be called after app.start())
+    // Start GPS tracking (enables real-time camera positioning updates)
     await currentLocAR.startGps();
 
     console.log('AR app initialized with', locations.length, 'POIs');
@@ -328,28 +330,17 @@ function searchLocations(query) {
   );
 }
 
-// Update POI positions based on GPS
+// POI positions are automatically handled by locar.js when using locar.add()
+// This function is kept for visibility toggling during location selection
 function updatePOIPositions() {
-  if (!currentLocAR || !locations.length) return;
+  if (!currentLocAR || !selectedLocationId) return;
 
-  console.log('=== Updating POI Positions ===');
-  console.log('Number of locations:', locations.length);
-  console.log('Number of POIs:', Object.keys(pois).length);
+  const selected = locations.find(l => l.id === selectedLocationId);
+  if (!selected) return;
 
-  // For each location, calculate its position relative to user's current GPS
-  locations.forEach(location => {
-    const marker = pois[location.id];
-    if (marker) {
-      try {
-        const vector = currentLocAR.convertGpsCoordsToVector3(location.lng, location.lat);
-        marker.position.copy(vector);
-        console.log(`${location.name} (${location.id}): Lat=${location.lat}, Lng=${location.lng} -> Vector=(${vector.x.toFixed(2)}, ${vector.y.toFixed(2)}, ${vector.z.toFixed(2)})`);
-      } catch (e) {
-        console.warn('Could not convert GPS coords for', location.name, e);
-      }
-    } else {
-      console.warn(`No marker found for ${location.name} (${location.id})`);
-    }
+  // Show only the selected location, hide others
+  Object.keys(pois).forEach(key => {
+    pois[key].visible = (key === selectedLocationId);
   });
 }
 
