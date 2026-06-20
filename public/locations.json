@@ -1,50 +1,10 @@
 [
   {
-    "id": "R",
-    "name": "Revels",
-    "lat": 48.711359,
-    "lng": -122.489252,
-    "description": "R",
-    "icon": null
-  },
-  {
-    "id": "S",
-    "name": "S & S",
-    "lat": 48.711321,
-    "lng": -122.488509,
-    "description": "S",
-    "icon": null
-  },
-  {
-    "id": "M",
-    "name": "M & M",
-    "lat": 48.711314,
-    "lng": -122.487736,
-    "description": "M",
-    "icon": null
-  },
-  {
-    "id": "RR",
-    "name": "Roger",
-    "lat": 48.713721,
-    "lng": -122.489305,
-    "description": "RRoger",
-    "icon": null
-  },
-  {
     "id": "H",
-    "name": "H & L",
+    "name": "HaL",
     "lat": 48.711920,
     "lng": -122.491269,
     "description": "HL",
-    "icon": null
-  },
-  {
-    "id": "PT",
-    "name": "Poet Tree",
-    "lat": 48.710861,
-    "lng": -122.488917,
-    "description": "PT",
     "icon": null
   }
 ]
