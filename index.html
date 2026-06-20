@@ -433,27 +433,28 @@
       // Create an A-Frame entity to hold the marker (LocAR will control its position)
       const entity = document.createElement('a-entity');
       
-      // Add the visual geometry as a child using A-Frame primitives
+      // Add the visual geometry as a child using A-Frame primitives - scaled up for better visibility
       const markerEntity = document.createElement('a-entity');
-      markerEntity.setAttribute('geometry', 'primitive: cone; radius: 0.5; height: 2; segments: 16');
+      markerEntity.setAttribute('geometry', 'primitive: cone; radius: 1.2; height: 4.5; segments: 16');
       markerEntity.setAttribute('material', 'color: #667eea');
       markerEntity.setAttribute('rotation', '-90 0 180'); // Point upward
-      markerEntity.setAttribute('position', '0 -1 0');
+      markerEntity.setAttribute('position', '0 -2 0');
       
-      // Add white border
+      // Add white border (slightly larger)
       const borderEntity = document.createElement('a-entity');
-      borderEntity.setAttribute('geometry', 'primitive: cone; radius: 0.52; height: 2; segments: 16');
+      borderEntity.setAttribute('geometry', 'primitive: cone; radius: 1.35; height: 4.5; segments: 16');
       borderEntity.setAttribute('material', 'color: #ffffff; side: back');
       borderEntity.setAttribute('rotation', '-90 0 180');
-      borderEntity.setAttribute('position', '0 -1 0');
+      borderEntity.setAttribute('position', '0 -2 0');
       
-      // Add text label below the marker
+      // Add text label above the marker
       const textEntity = document.createElement('a-text');
       textEntity.setAttribute('value', name);
       textEntity.setAttribute('color', '#000000');
       textEntity.setAttribute('align', 'center');
-      textEntity.setAttribute('width', '4');
-      textEntity.setAttribute('position', '0 0.5 0');
+      textEntity.setAttribute('width', '6');
+      textEntity.setAttribute('position', '0 2.5 0');
+      textEntity.setAttribute('scale', '1.2 1.2 1.2'); // Increase text size
       
       markerEntity.appendChild(textEntity);
       entity.appendChild(markerEntity);
