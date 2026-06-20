@@ -59,7 +59,7 @@ function createPOIMarker(location, isHighlighted = false) {
   });
 
   const circle = new THREE.Mesh(geometry, material);
-  circle.position.y = radius;
+  circle.position.y = radius + 1.5; // Lift marker higher for better visibility
   group.add(circle);
 
   // Add text sprite for the location name
