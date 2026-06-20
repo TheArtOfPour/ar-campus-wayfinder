@@ -47,7 +47,7 @@ function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
   // Main marker - floating circle above the ground (larger for better visibility)
-  const radius = isHighlighted ? 1.2 : 0.8;
+  const radius = isHighlighted ? 8 : 5;
   const geometry = new THREE.CircleGeometry(radius, 32);
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
