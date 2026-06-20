@@ -16,26 +16,26 @@ let currentHeading = 0;
 // Scene setup with A-Frame style component pattern
 function createScene(app) {
   const scene = app.scene;
-  
+
   // Add lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
-  
+
   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
   directionalLight.position.set(10, 20, 10);
   scene.add(directionalLight);
-  
+
   return scene;
 }
 
 // Create POI marker with text and icon
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
-  
+
   // Main marker - floating circle above the ground (lowered for better visibility)
   const radius = isHighlighted ? 0.5 : 0.3;
   const geometry = new THREE.CircleGeometry(radius, 32);
-  
+
   const color = isHighlighted ? 0x4facfe : 0x00f260;
   const material = new THREE.MeshBasicMaterial({
     color: color,
@@ -43,32 +43,32 @@ function createPOIMarker(location, isHighlighted = false) {
     opacity: 0.8,
     side: THREE.DoubleSide
   });
-  
+
   const circle = new THREE.Mesh(geometry, material);
   circle.position.y = radius;
   group.add(circle);
-  
+
   // Add a smaller dot in the center
   const dotGeometry = new THREE.CircleGeometry(radius * 0.3, 16);
   const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const dot = new THREE.Mesh(dotGeometry, dotMaterial);
   dot.position.y = radius;
   group.add(dot);
-  
+
   // Create text sprite for the location name (lowered position)
   if (location.name) {
     const textSprite = createTextSprite(location.name, isHighlighted ? '#ffffff' : '#000000');
     textSprite.position.set(0, radius + 0.6, 0);
     group.add(textSprite);
   }
-  
+
   // Add optional icon (lowered position)
   if (location.icon) {
     const iconSprite = createIconSprite(location.icon);
     iconSprite.position.set(radius * 0.6, radius - 0.1, 0);
     group.add(iconSprite);
   }
-  
+
   return group;
 }
 
@@ -80,39 +80,39 @@ function createTextSprite(message, color) {
   const padding = 8;
   const metrics = ctx.measureText(message);
   const textWidth = metrics.width;
-  
+
   canvas.width = textWidth + padding * 2;
   canvas.height = 32;
-  
+
   ctx.fillStyle = color;
   ctx.font = 'Bold 16px Arial';
   ctx.textBaseline = 'middle';
   ctx.fillText(message, padding, canvas.height / 2);
-  
+
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(4, 1, 1); // Adjust scale for text
-  
+
   return sprite;
 }
 
 // Create icon sprite (using placeholder if no actual image)
 function createIconSprite(iconData) {
   let canvas, ctx, texture, material, sprite;
-  
+
   // Use a simple placeholder icon if no valid image
   canvas = document.createElement('canvas');
   ctx = canvas.getContext('2d');
   canvas.width = 48;
   canvas.height = 48;
-  
+
   // Draw a pin icon
   ctx.fillStyle = '#ff5722';
   ctx.beginPath();
   ctx.arc(24, 16, 10, 0, Math.PI * 2);
   ctx.fill();
-  
+
   ctx.fillStyle = '#ff5722';
   ctx.fillRect(20, 26, 8, 22);
   ctx.beginPath();
@@ -120,22 +120,22 @@ function createIconSprite(iconData) {
   ctx.lineTo(14, 38);
   ctx.lineTo(26, 38);
   ctx.fill();
-  
+
   texture = new THREE.CanvasTexture(canvas);
   material = new THREE.SpriteMaterial({ map: texture });
   sprite = new THREE.Sprite(material);
   sprite.scale.set(2.5, 2.5, 1);
-  
+
   return sprite;
 }
 
 // Update all POI positions based on current GPS position
 function updatePOIs() {
   if (!currentLocAR || !selectedLocationId) return;
-  
+
   const selected = locations.find(l => l.id === selectedLocationId);
   if (!selected) return;
-  
+
   // Show only the selected location
   Object.keys(pois).forEach(key => {
     if (key === selectedLocationId) {
@@ -151,64 +151,65 @@ async function loadLocations() {
   try {
     const response = await fetch(LOCATIONS_URL);
     if (!response.ok) throw new Error('Failed to load locations.json');
-    
+
     locations = await response.json();
     console.log('Loaded', locations.length, 'locations');
-    
+
     return locations;
   } catch (error) {
     console.error('Error loading locations:', error);
     // Return default sample data if fetch fails
     return [
       {
-        "id": "building-a",
-        "name": "HC",
-        "lat": 48.76493902606986,
-        "lng": -122.5102771303933,
-        "description": "Haskell Center",
+        "id": "R",
+        "name": "Revels",
+        "lat": 48.711359,
+        "lng": -122.489252,
+        "description": "R",
         "icon": null
       },
       {
-        "id": "building-b",
-        "name": "CS",
-        "lat": 48.76517874251886,
-        "lng": -122.5090488989137,
-        "description": "College Services",
+        "id": "S",
+        "name": "S & S",
+        "lat": 48.711321,
+        "lng": -122.488509,
+        "description": "S",
         "icon": null
       },
       {
-        "id": "building-c",
-        "name": "CC",
-        "lat": 48.76562014758625,
-        "lng": -122.51045768889969,
-        "description": "Campus Center",
+        "id": "M",
+        "name": "M & M",
+        "lat": 48.711314,
+        "lng": -122.487736,
+        "description": "M",
         "icon": null
       },
       {
-        "id": "field",
-        "name": "MC",
-        "lat": 48.766928218600846,
-        "lng": -122.50853234258545,
-        "description": "",
+        "id": "RR",
+        "name": "Roger",
+        "lat": 48.713721,
+        "lng": -122.489305,
+        "description": "RRoger",
         "icon": null
       },
       {
-        "id": "auditorium",
-        "name": "DMC",
-        "lat": 48.765794902908155,
-        "lng": -122.50860865204304,
-        "description": "",
+        "id": "H",
+        "name": "H & L",
+        "lat": 48.711920,
+        "lng": -122.491269,
+        "description": "HL",
         "icon": null
       },
       {
-        "id": "engineering",
-        "name": "A",
-        "lat": 48.765686889960215,
-        "lng": -122.51286437179239,
-        "description": "",
+        "id": "PT",
+        "name": "Poet Tree",
+        "lat": 48.710861,
+        "lng": -122.488917,
+        "description": "PT",
         "icon": null
       }
-    ];
+    ]
+      ;
   }
 }
 
@@ -218,47 +219,47 @@ async function initAR() {
     cameraOptions: { hFov: 80, near: 0.001, far: 1000 },
     rendererOptions: { alpha: true, antialias: true }
   });
-  
+
   try {
     // Start the AR app (this will request permissions)
     currentLocAR = await app.start();
-    
+
     // Listen for GPS position updates and update POI positions
     currentLocAR.on('gpsupdate', (ev) => {
       updatePOIPositions();
       updateDebugPanel(ev);
     });
-    
+
     // Handle GPS errors
     currentLocAR.on('gpserror', (error) => {
       console.warn('GPS error:', error);
     });
-    
+
     const scene = createScene(app);
-    
+
     // Load locations
     const loadedLocations = await loadLocations();
     locations = loadedLocations;
-    
+
     // Create POI markers for each location
     locations.forEach(location => {
       const marker = createPOIMarker(location, false);
-      
+
       // Store the marker and its location reference
       pois[location.id] = marker;
       scene.add(marker);
     });
-    
+
     // Start GPS tracking (must be called after app.start())
     await currentLocAR.startGps();
-    
+
     console.log('AR app initialized with', locations.length, 'POIs');
-    
+
     // Store app instance globally for visibility change handling
     appInstance = app;
-    
+
     return { app, currentLocAR };
-    
+
   } catch (error) {
     console.error('Error initializing AR:', error);
     alert(`AR initialization failed: ${error.message}`);
@@ -270,7 +271,7 @@ async function initAR() {
 function selectLocation(id) {
   selectedLocationId = id;
   showAllLocations = false;
-  
+
   // Update POI visibility and highlighting
   Object.keys(pois).forEach(key => {
     if (key === id) {
@@ -279,7 +280,7 @@ function selectLocation(id) {
       pois[key].visible = false;
     }
   });
-  
+
   // Update UI to show selection state
   document.getElementById('search-input').value = '';
   renderLocationInfo(id);
@@ -289,11 +290,11 @@ function selectLocation(id) {
 function setShowAllLocations() {
   selectedLocationId = null;
   showAllLocations = true;
-  
+
   Object.keys(pois).forEach(key => {
     pois[key].visible = true;
   });
-  
+
   // Clear selection UI
   document.getElementById('location-info').innerHTML = '<h3>Campus Wayfinder</h3><p style="margin-top:10px;">Select a location on the map or search to find buildings and points of interest.</p>';
 }
@@ -302,7 +303,7 @@ function setShowAllLocations() {
 function renderLocationInfo(id) {
   const location = locations.find(l => l.id === id);
   if (!location) return;
-  
+
   const infoPanel = document.getElementById('location-info');
   infoPanel.innerHTML = `
     <h3>${location.name}</h3>
@@ -314,7 +315,7 @@ function renderLocationInfo(id) {
 // Search functionality
 function searchLocations(query) {
   const normalizedQuery = query.toLowerCase();
-  return locations.filter(location => 
+  return locations.filter(location =>
     location.name.toLowerCase().includes(normalizedQuery)
   );
 }
@@ -322,7 +323,7 @@ function searchLocations(query) {
 // Update POI positions based on GPS
 function updatePOIPositions() {
   if (!currentLocAR || !locations.length) return;
-  
+
   // For each location, calculate its position relative to user's current GPS
   locations.forEach(location => {
     const marker = pois[location.id];
@@ -343,16 +344,16 @@ function updateDebugPanel(gpsEvent) {
   const lngEl = document.getElementById('debug-lng');
   const accuracyEl = document.getElementById('debug-accuracy');
   const headingEl = document.getElementById('debug-heading');
-  
+
   if (gpsEvent && gpsEvent.position) {
     const coords = gpsEvent.position.coords;
     if (latEl) latEl.textContent = coords.latitude.toFixed(6);
     if (lngEl) lngEl.textContent = coords.longitude.toFixed(6);
     if (accuracyEl) accuracyEl.textContent = coords.accuracy ? coords.accuracy.toFixed(1) + 'm' : '--';
   }
-  
+
   if (headingEl) headingEl.textContent = currentHeading.toFixed(1) + '°';
-  
+
   // Update compass needle rotation
   const needle = document.getElementById('compass-needle');
   if (needle) {
@@ -386,28 +387,28 @@ function setupCompassListener() {
 export async function init() {
   try {
     const { currentLocAR: locarInstance } = await initAR();
-    
+
     // Set up compass listener for device orientation
     setupCompassListener();
-    
+
     // Check if GPS is working properly
     checkGPSStatus();
-    
+
     // Set up event listeners
     document.getElementById('search-input').addEventListener('input', (e) => {
       const query = e.target.value.trim().toLowerCase();
       const resultsContainer = document.getElementById('search-results');
-      
+
       if (!query) {
         setShowAllLocations();
         resultsContainer.innerHTML = '';
         return;
       }
-      
+
       // Show search results
       const results = searchLocations(query);
       resultsContainer.innerHTML = '';
-      
+
       if (results.length === 0) {
         resultsContainer.innerHTML = '<p style="padding:15px;">No locations found</p>';
       } else {
@@ -420,18 +421,18 @@ export async function init() {
         });
       }
     });
-    
+
     // Expose reset function globally for the UI
     window.app = {
       resetToAll: setShowAllLocations,
       locations: locations
     };
-    
+
     // Show all locations initially
     Object.keys(pois).forEach(key => {
       pois[key].visible = true;
     });
-    
+
     // Handle visibility change to prevent camera freeze when returning to page
     document.addEventListener('visibilitychange', async () => {
       if (document.visibilityState === 'visible' && appInstance) {
@@ -448,7 +449,7 @@ export async function init() {
         }
       }
     });
-    
+
   } catch (error) {
     console.error('Failed to initialize:', error);
     document.body.innerHTML = '<div style="padding:20px;color:red;"><h1>Error</h1><p>AR initialization failed. Please ensure you are using a device with GPS and compass support, and that you have granted the necessary permissions.</p><p><strong>Note:</strong> This app requires HTTPS or localhost to work properly due to browser security requirements for sensor access.</p></div>';
@@ -491,7 +492,7 @@ function checkGPSStatus() {
     <p style="margin:0; font-size:13px;">Please allow GPS access when prompted by your browser.</p>
     <button onclick="document.getElementById('gps-permission-notice').remove()" style="margin-top:8px;padding:6px 12px;background:#e65100;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">Got it</button>
   `;
-  
+
   // Remove after 3 seconds if GPS is working (approximate check)
   setTimeout(() => {
     const notice = document.getElementById('gps-permission-notice');

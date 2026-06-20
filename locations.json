@@ -1,50 +1,50 @@
 [
   {
-    "id": "building-a",
+    "id": "R",
     "name": "Revels",
     "lat": 48.711359,
     "lng": -122.489252,
-    "description": "Haskell Center",
+    "description": "R",
     "icon": null
   },
   {
-    "id": "building-b",
+    "id": "S",
     "name": "S & S",
     "lat": 48.711321,
     "lng": -122.488509,
-    "description": "College Services",
+    "description": "S",
     "icon": null
   },
   {
-    "id": "building-c",
+    "id": "M",
     "name": "M & M",
     "lat": 48.711314,
     "lng": -122.487736,
-    "description": "Campus Center",
+    "description": "M",
     "icon": null
   },
   {
-    "id": "field",
+    "id": "RR",
     "name": "Roger",
     "lat": 48.713721,
     "lng": -122.489305,
-    "description": "",
+    "description": "RRoger",
     "icon": null
   },
   {
-    "id": "auditorium",
+    "id": "H",
     "name": "H & L",
     "lat": 48.711920,
     "lng": -122.491269,
-    "description": "",
+    "description": "HL",
     "icon": null
   },
   {
-    "id": "engineering",
+    "id": "PT",
     "name": "Poet Tree",
     "lat": 48.710861,
     "lng": -122.488917,
-    "description": "",
+    "description": "PT",
     "icon": null
   }
 ]
