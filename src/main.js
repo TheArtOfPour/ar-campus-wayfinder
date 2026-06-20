@@ -77,14 +77,14 @@ function createPOIMarker(location, isHighlighted = false) {
   // Make the sprite face the camera automatically and be rectangular
   const rectSprite = new THREE.Sprite(spriteMaterial);
   rectSprite.scale.set(width, height, 1);
-  rectSprite.position.y = 5;  // Lower than text
   
   group.add(rectSprite);
 
   // Add text sprite for the location name (positioned above rectangle)
   if (location.name) {
     const textSprite = createTextSprite(location.name, '#000000'); // Always black
-    textSprite.position.set(0, height/2 + 35, 0);  // Above the rectangle
+    // Position text centered vertically with the rectangle
+    textSprite.position.set(0, height/2 - rectSprite.scale.y/2 + 15, 0);
     group.add(textSprite);
   }
 
