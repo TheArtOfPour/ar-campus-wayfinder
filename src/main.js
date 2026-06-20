@@ -83,8 +83,10 @@ function createPOIMarker(location, isHighlighted = false) {
   // Add text sprite for the location name (positioned above rectangle)
   if (location.name) {
     const textSprite = createTextSprite(location.name, '#000000'); // Always black
-    // Position text centered vertically with the rectangle
-    textSprite.position.set(0, height/2 - rectSprite.scale.y/2 + 15, 0);
+    // Position text centered vertically with the rectangle + small gap
+    // The text sprite's height is scale.y ≈ 12 units
+    const textHeight = 12;
+    textSprite.position.set(0, (height/2) - (textHeight/2) + 15, 0);
     group.add(textSprite);
   }
 
@@ -100,8 +102,9 @@ function createTextSprite(message, color) {
   const metrics = ctx.measureText(message);
   const textWidth = metrics.width;
 
+  // Match canvas aspect ratio to sprite scale (45:12 ≈ 3.75:1)
   canvas.width = textWidth + padding * 2;
-  canvas.height = 320; // Taller canvas for larger text
+  canvas.height = Math.round(canvas.width / 3.75);
 
   ctx.fillStyle = color;
   ctx.font = 'Bold 160px Arial';
@@ -111,7 +114,8 @@ function createTextSprite(message, color) {
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(45, 12, 1); // Larger scale for better readability
+  // Scale matches the canvas aspect ratio (width ≈ 3.75× height)
+  sprite.scale.set(45, Math.round(45 / 3.75), 1);
 
   return sprite;
 }
@@ -156,7 +160,8 @@ async function initAR() {
     
     // Add GPS callback for heading updates
     currentLocAR.on('gpsupdate', (data) => {
-      if (data.heading !== null && data.heading !== undefined) {
+      if (data.heading !== null && data.heading !== undefined && !isNaN(data.heading)) {
+        // Compass rotates opposite to device heading: 0°=N, 90°=E, etc.
         updateCompassHeading(data.heading);
       }
     });
