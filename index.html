@@ -412,7 +412,6 @@
 
       for (const loc of locations) {
         const markerGroup = createTeardropMarker(loc.lat, loc.lng, loc.name, loc.description, loc.icon);
-        container.appendChild(markerGroup);
 
         poiEntities[loc.id] = markerGroup;
         markerGroup.location = loc;
@@ -432,12 +431,13 @@
 
     function createTeardropMarker(lat, lng, name, description, customIconUrl) {
       const group = new THREE.Group();
-      
-      const position = currentLocAR.convertGpsCoordsToVector3(lng, lat);
-      group.position.copy(position);
 
+      // Create the marker geometry first
       const markerGeometry = createTeardropGeometry('#667eea', customIconUrl);
       group.add(markerGeometry);
+
+      // Add to LocAR which will position it at GPS coordinates
+      currentLocAR.add(group, lng, lat);
 
       return group;
     }
