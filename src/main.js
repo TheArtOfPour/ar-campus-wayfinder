@@ -67,7 +67,7 @@ function createPOIMarker(location, isHighlighted = false) {
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
   // Create a sprite material (always faces camera) - rectangular for better text backing
-  const spriteMaterial = new THREE.SpriteMaterial({
+  const rectSpriteMaterial = new THREE.SpriteMaterial({
     color: color,
     transparent: true,
     opacity: 0.9,
@@ -75,18 +75,17 @@ function createPOIMarker(location, isHighlighted = false) {
   });
   
   // Make the sprite face the camera automatically and be rectangular
-  const rectSprite = new THREE.Sprite(spriteMaterial);
+  const rectSprite = new THREE.Sprite(rectSpriteMaterial);
   rectSprite.scale.set(width, height, 1);
   
   group.add(rectSprite);
 
-  // Add text sprite for the location name (positioned above rectangle)
+  // Add text sprite for the location name (positioned in front of rectangle)
   if (location.name) {
     const textSprite = createTextSprite(location.name, '#000000'); // Always black
-    // Position text centered vertically with the rectangle + small gap
-    // The text sprite's height is scale.y ≈ 12 units
+    // Position text centered horizontally, above the green backdrop, and slightly forward on Z-axis
     const textHeight = 12;
-    textSprite.position.set(0, (height/2) - (textHeight/2) + 15, 0);
+    textSprite.position.set(0, (height/2) - (textHeight/2) + 15, 1); // Z=1 brings it forward
     group.add(textSprite);
   }
 
