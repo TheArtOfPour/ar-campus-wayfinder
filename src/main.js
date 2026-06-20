@@ -46,30 +46,28 @@ function updateVersionDisplay(version, branchName = '') {
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
-  // Main marker - floating circle above the ground (very large for better visibility)
-  const radius = isHighlighted ? 80 : 50;
-  const geometry = new THREE.CircleGeometry(radius, 32);
+  // Main marker - floating circle above the ground (large for better visibility)
+  const radius = isHighlighted ? 30 : 20;
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
-  const material = new THREE.MeshBasicMaterial({
+  // Create a sprite material (always faces camera)
+  const spriteMaterial = new THREE.SpriteMaterial({
     color: color,
     transparent: true,
-    opacity: 0.8,
-    side: THREE.DoubleSide
+    opacity: 0.8
   });
-
-  const circle = new THREE.Mesh(geometry, material);
-  circle.position.y = radius + 15; // Lift marker higher for better visibility
   
-  // Make the circle always face the camera (billboarding)
-  circle.lookAt(currentLocAR.camera.position);
+  // Make the sprite face the camera automatically
+  const circleSprite = new THREE.Sprite(spriteMaterial);
+  circleSprite.scale.set(radius * 2, radius * 2, 1); // Scale to make it circular in world space
+  circleSprite.position.y = radius + 10;
   
-  group.add(circle);
+  group.add(circleSprite);
 
-  // Add text sprite for the location name (positioned above and facing camera)
+  // Add text sprite for the location name (positioned above circle)
   if (location.name) {
     const textSprite = createTextSprite(location.name, isHighlighted ? '#ffffff' : '#000000');
-    textSprite.position.set(0, radius + 25, 0);
+    textSprite.position.set(0, radius + 15, 0);
     group.add(textSprite);
   }
 
