@@ -3,7 +3,6 @@
   position: absolute;
   top: 75px;
   left: 50%;
-  transform: translateX(-50%);
   width: 90%;
   max-width: 400px;
   background: rgba(255, 255, 255, 0.95);
@@ -33,7 +32,6 @@
 .location-info-container {
   bottom: 15px;
   left: 50%;
-  transform: translateX(-50%);
   width: 90%;
   max-width: 380px;
   pointer-events: auto;
