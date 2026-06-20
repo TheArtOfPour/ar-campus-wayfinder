@@ -5,6 +5,7 @@ const THREE = window.THREE;
 
 // Campus locations data (GPS coordinates + info)
 const LOCATIONS_URL = './locations.json';
+const VERSION_JSON_URL = '/version.json';
 
 // Store for loaded locations and POI objects
 let locations = [];
@@ -13,12 +14,40 @@ let currentLocAR;
 let selectedLocationId = null;
 let appInstance = null;
 
+// Load version info from version.json
+async function loadVersionInfo() {
+  try {
+    const response = await fetch(VERSION_JSON_URL);
+    if (response.ok) {
+      const versionInfo = await response.json();
+      updateVersionDisplay(versionInfo.version, versionInfo.branchName);
+    } else {
+      updateVersionDisplay('dev', 'unknown');
+    }
+  } catch (error) {
+    console.warn('Could not load version info:', error);
+    updateVersionDisplay('dev', 'unknown');
+  }
+}
+
+// Update version display element
+function updateVersionDisplay(version, branchName = '') {
+  const versionEl = document.getElementById('version-display');
+  if (versionEl) {
+    if (branchName && branchName !== 'unknown') {
+      versionEl.textContent = `v${version} (${branchName})`;
+    } else {
+      versionEl.textContent = `v${version}`;
+    }
+  }
+}
+
 // Create POI marker with text and icon
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
-  // Main marker - floating circle above the ground
-  const radius = isHighlighted ? 0.5 : 0.3;
+  // Main marker - floating circle above the ground (larger for better visibility)
+  const radius = isHighlighted ? 1.2 : 0.8;
   const geometry = new THREE.CircleGeometry(radius, 32);
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
@@ -186,6 +215,9 @@ function searchLocations(query) {
 // Main initialization function called from HTML
 export async function init() {
   try {
+    // Load version info first (shows in bottom-left corner)
+    loadVersionInfo();
+    
     await initAR();
 
     // Show all locations initially
