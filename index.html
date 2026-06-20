@@ -430,20 +430,41 @@
     }
 
     function createTeardropMarker(lat, lng, name, description, customIconUrl) {
-      const group = new THREE.Group();
-
-      // Create the marker geometry first
-      const markerGeometry = createTeardropGeometry('#667eea', customIconUrl);
-      group.add(markerGeometry);
-
+      // Create an A-Frame entity to hold the marker (LocAR will control its position)
+      const entity = document.createElement('a-entity');
+      
+      // Add the visual geometry as a child using A-Frame primitives
+      const markerEntity = document.createElement('a-entity');
+      markerEntity.setAttribute('geometry', 'primitive: cone; radius: 0.5; height: 2; segments: 16');
+      markerEntity.setAttribute('material', 'color: #667eea');
+      markerEntity.setAttribute('rotation', '-90 0 180'); // Point upward
+      markerEntity.setAttribute('position', '0 -1 0');
+      
+      // Add white border
+      const borderEntity = document.createElement('a-entity');
+      borderEntity.setAttribute('geometry', 'primitive: cone; radius: 0.52; height: 2; segments: 16');
+      borderEntity.setAttribute('material', 'color: #ffffff; side: back');
+      borderEntity.setAttribute('rotation', '-90 0 180');
+      borderEntity.setAttribute('position', '0 -1 0');
+      
+      // Add text label below the marker
+      const textEntity = document.createElement('a-text');
+      textEntity.setAttribute('value', name);
+      textEntity.setAttribute('color', '#000000');
+      textEntity.setAttribute('align', 'center');
+      textEntity.setAttribute('width', '4');
+      textEntity.setAttribute('position', '0 0.5 0');
+      
+      markerEntity.appendChild(textEntity);
+      entity.appendChild(markerEntity);
+      entity.appendChild(borderEntity);
+      
       // Add to LocAR which will position it at GPS coordinates
-      currentLocAR.add(group, lng, lat);
+      currentLocAR.add(entity.object3D, lng, lat);
+      
+      document.getElementById('poi-container').appendChild(entity);
 
-      // Store reference for later updates
-      if (!group.userData) group.userData = {};
-      group.userData.locationId = name;
-
-      return group;
+      return entity;
     }
 
     function getHoveredPOI() {
