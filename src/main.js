@@ -78,23 +78,23 @@ function createPOIMarker(location, isHighlighted = false) {
 function createTextSprite(message, color) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  ctx.font = 'Bold 14px Arial';
+  ctx.font = 'Bold 140px Arial'; // Increased font size 10x
   const padding = 6;
   const metrics = ctx.measureText(message);
   const textWidth = metrics.width;
 
   canvas.width = textWidth + padding * 2;
-  canvas.height = 28;
+  canvas.height = 280; // Increased height
 
   ctx.fillStyle = color;
-  ctx.font = 'Bold 14px Arial';
+  ctx.font = 'Bold 140px Arial';
   ctx.textBaseline = 'middle';
   ctx.fillText(message, padding, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(3.5, 1, 1);
+  sprite.scale.set(35, 10, 1); // Increased scale 10x
 
   return sprite;
 }
