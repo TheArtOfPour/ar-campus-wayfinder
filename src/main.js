@@ -61,9 +61,19 @@ function updateVersionDisplay(version, branchName = '') {
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
-  // Main marker - floating rectangle above the ground (large for better visibility)
-  const width = isHighlighted ? 60 : 40;
-  const height = isHighlighted ? 25 : 18;
+  // Create the text sprite first to get its actual dimensions
+  const textSprite = createTextSprite(location.name, '#000000'); // Always black
+  
+  // Get the actual dimensions from the text sprite's scale
+  const textWidth = textSprite.scale.x;
+  const textHeight = textSprite.scale.y;
+  
+  // Add padding around text for the green backdrop
+  const paddingX = 15;  // Extra width on each side
+  const paddingY = 8;   // Extra height on top/bottom
+  
+  const backdropWidth = textWidth + paddingX * 2;
+  const backdropHeight = textHeight + paddingY * 2;
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
   // Create a sprite material (always faces camera) - rectangular for better text backing
@@ -76,18 +86,13 @@ function createPOIMarker(location, isHighlighted = false) {
   
   // Make the sprite face the camera automatically and be rectangular
   const rectSprite = new THREE.Sprite(rectSpriteMaterial);
-  rectSprite.scale.set(width, height, 1);
+  rectSprite.scale.set(backdropWidth, backdropHeight, 1);
   
   group.add(rectSprite);
 
-  // Add text sprite for the location name (positioned in front of rectangle)
-  if (location.name) {
-    const textSprite = createTextSprite(location.name, '#000000'); // Always black
-    // Position text centered horizontally, above the green backdrop, and slightly forward on Z-axis
-    const textHeight = 12;
-    textSprite.position.set(0, (height/2) - (textHeight/2) + 15, 1); // Z=1 brings it forward
-    group.add(textSprite);
-  }
+  // Add text sprite centered over the green backdrop (slightly forward on Z-axis)
+  textSprite.position.set(0, 0, 1); // Centered, Z=1 brings it forward
+  group.add(textSprite);
 
   return group;
 }
@@ -113,8 +118,8 @@ function createTextSprite(message, color) {
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
-  // Scale matches the canvas aspect ratio (width ≈ 3.75× height)
-  sprite.scale.set(45, Math.round(45 / 3.75), 1);
+  // Scale matches the actual canvas dimensions
+  sprite.scale.set(canvas.width, canvas.height, 1);
 
   return sprite;
 }
