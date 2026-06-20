@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -28,7 +28,12 @@ try {
   };
   
   // Write to version.json in the public directory
-  const versionPath = join(__dirname, '..', 'public', 'version.json');
+  const publicDir = join(__dirname, '..', 'public');
+  const versionPath = join(publicDir, 'version.json');
+  
+  // Create public directory if it doesn't exist
+  mkdirSync(publicDir, { recursive: true });
+  
   writeFileSync(versionPath, JSON.stringify(versionInfo, null, 2));
   
   console.log('Version info generated:', versionInfo.version);
@@ -43,7 +48,12 @@ try {
     version: 'dev'
   };
   
-  const versionPath = join(__dirname, '..', 'public', 'version.json');
+  const publicDir = join(__dirname, '..', 'public');
+  const versionPath = join(publicDir, 'version.json');
+  
+  // Create public directory if it doesn't exist
+  mkdirSync(publicDir, { recursive: true });
+  
   writeFileSync(versionPath, JSON.stringify(fallbackInfo, null, 2));
   console.log('Fallback version info generated');
 }
