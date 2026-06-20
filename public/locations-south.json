@@ -24,19 +24,19 @@
     "icon": null
   },
   {
-    "id": "RR",
-    "name": "Roger",
-    "lat": 48.713721,
-    "lng": -122.489305,
-    "description": "RRoger",
+    "id": "H",
+    "name": "HaL",
+    "lat": 48.711420,
+    "lng": -122.490614,
+    "description": "HL",
     "icon": null
   },
   {
-    "id": "H",
-    "name": "H & L",
-    "lat": 48.711920,
-    "lng": -122.491269,
-    "description": "HL",
+    "id": "RR",
+    "name": "Roger",
+    "lat": 48.713675,
+    "lng": -122.489330,
+    "description": "RRoger",
     "icon": null
   },
   {
