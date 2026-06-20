@@ -46,8 +46,8 @@ function updateVersionDisplay(version, branchName = '') {
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
-  // Main marker - floating circle above the ground (larger for better visibility)
-  const radius = isHighlighted ? 8 : 5;
+  // Main marker - floating circle above the ground (very large for better visibility)
+  const radius = isHighlighted ? 80 : 50;
   const geometry = new THREE.CircleGeometry(radius, 32);
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
@@ -59,13 +59,17 @@ function createPOIMarker(location, isHighlighted = false) {
   });
 
   const circle = new THREE.Mesh(geometry, material);
-  circle.position.y = radius + 1.5; // Lift marker higher for better visibility
+  circle.position.y = radius + 15; // Lift marker higher for better visibility
+  
+  // Make the circle always face the camera (billboarding)
+  circle.lookAt(currentLocAR.camera.position);
+  
   group.add(circle);
 
-  // Add text sprite for the location name
+  // Add text sprite for the location name (positioned above and facing camera)
   if (location.name) {
     const textSprite = createTextSprite(location.name, isHighlighted ? '#ffffff' : '#000000');
-    textSprite.position.set(0, radius + 0.5, 0);
+    textSprite.position.set(0, radius + 25, 0);
     group.add(textSprite);
   }
 
