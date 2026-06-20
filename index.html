@@ -30,8 +30,11 @@
     /* UI Overlay */
     .ui-overlay {
       position: absolute;
-      z-index: 10;
+      top: 0;
+      left: 0;
       width: 100%;
+      height: 100%;
+      z-index: 10;
       pointer-events: none;
     }
     
@@ -318,6 +321,154 @@
       color: #e65100;
       font-size: 16px;
     }
+    
+    /* Version display */
+    .version-display {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: monospace;
+      z-index: 100;
+      pointer-events: none;
+    }
+    
+    /* Debug info panel */
+    .debug-panel {
+      position: absolute;
+      top: 70px;
+      right: 15px;
+      width: 220px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
+      padding: 15px;
+      color: #fff;
+      font-size: 12px;
+      z-index: 90;
+      pointer-events: auto;
+      display: none;
+    }
+    
+    .debug-panel.active {
+      display: block;
+    }
+    
+    .debug-panel h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #4facfe;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 8px;
+    }
+    
+    .debug-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-family: monospace;
+    }
+    
+    .debug-label {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .debug-value {
+      color: #00f260;
+    }
+    
+    /* Compass visualization */
+    .compass-container {
+      width: 80px;
+      height: 80px;
+      margin: 10px auto;
+      position: relative;
+    }
+    
+    .compass-ring {
+      width: 100%;
+      height: 100%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      position: relative;
+    }
+    
+    .compass-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 35px;
+      background: linear-gradient(to bottom, #ff5722 50%, #fff 50%);
+      transform-origin: center center;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s ease-out;
+    }
+    
+    .compass-north {
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ff5722;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .compass-east {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 10px;
+    }
+    
+    .compass-south {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 10px;
+    }
+    
+    .compass-west {
+      position: absolute;
+      left: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 10px;
+    }
+    
+    /* Debug toggle button */
+    .debug-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 95;
+      pointer-events: auto;
+    }
+    
+    .debug-toggle:hover {
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -332,6 +483,39 @@
   
   <!-- Info button - hidden until start is clicked -->
   <button class="info-button" onclick="toggleInfoPanel()" style="display:none;">?</button>
+  
+  <!-- Debug toggle button - hidden until start is clicked -->
+  <button class="debug-toggle" onclick="toggleDebugPanel()" style="display:none;">🔧</button>
+  
+  <!-- Debug panel -->
+  <div class="debug-panel" id="debug-panel">
+    <h4>Debug Info</h4>
+    <div class="debug-row">
+      <span class="debug-label">Lat:</span>
+      <span class="debug-value" id="debug-lat">--</span>
+    </div>
+    <div class="debug-row">
+      <span class="debug-label">Lng:</span>
+      <span class="debug-value" id="debug-lng">--</span>
+    </div>
+    <div class="debug-row">
+      <span class="debug-label">Accuracy:</span>
+      <span class="debug-value" id="debug-accuracy">--</span>
+    </div>
+    <div class="debug-row">
+      <span class="debug-label">Heading:</span>
+      <span class="debug-value" id="debug-heading">--</span>
+    </div>
+    <div class="compass-container">
+      <div class="compass-ring">
+        <div class="compass-north">N</div>
+        <div class="compass-east">E</div>
+        <div class="compass-south">S</div>
+        <div class="compass-west">W</div>
+        <div class="compass-needle" id="compass-needle"></div>
+      </div>
+    </div>
+  </div>
   <div class="ui-overlay">
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search locations..." autocomplete="off">
@@ -409,6 +593,9 @@
       const infoButton = document.querySelector('.info-button');
       if (infoButton) infoButton.style.display = 'block';
       
+      const debugToggle = document.querySelector('.debug-toggle');
+      if (debugToggle) debugToggle.style.display = 'block';
+      
       try {
         await initApp();
         if (loading) loading.style.display = 'none';
@@ -425,6 +612,11 @@
       const panel = document.getElementById('info-panel');
       panel.classList.toggle('active');
     };
+    
+    window.toggleDebugPanel = function() {
+      const panel = document.getElementById('debug-panel');
+      panel.classList.toggle('active');
+    };
   </script>
   
   <!-- Loading overlay -->
@@ -432,5 +624,8 @@
     <div class="loading-spinner"></div>
     <p>Initializing AR...</p>
   </div>
+  
+  <!-- Version display -->
+  <div class="version-display" id="version-display">Loading version...</div>
 </body>
 </html>

@@ -1,49 +1,49 @@
 [
   {
     "id": "building-a",
-    "name": "HC",
-    "lat": 48.76493902606986,
-    "lng": -122.5102771303933,
+    "name": "Revels",
+    "lat": 48.711359,
+    "lng": -122.489252,
     "description": "Haskell Center",
     "icon": null
   },
   {
     "id": "building-b",
-    "name": "CS",
-    "lat": 48.76517874251886,
-    "lng": -122.5090488989137,
+    "name": "S & S",
+    "lat": 48.711321,
+    "lng": -122.488509,
     "description": "College Services",
     "icon": null
   },
   {
     "id": "building-c",
-    "name": "CC",
-    "lat": 48.76562014758625,
-    "lng": -122.51045768889969,
+    "name": "M & M",
+    "lat": 48.711314,
+    "lng": -122.487736,
     "description": "Campus Center",
     "icon": null
   },
   {
     "id": "field",
-    "name": "MC",
-    "lat": 48.766928218600846,
-    "lng": -122.50853234258545,
+    "name": "Roger",
+    "lat": 48.713721,
+    "lng": -122.489305,
     "description": "",
     "icon": null
   },
   {
     "id": "auditorium",
-    "name": "DMC",
-    "lat": 48.765794902908155,
-    "lng": -122.50860865204304,
+    "name": "H & L",
+    "lat": 48.711920,
+    "lng": -122.491269,
     "description": "",
     "icon": null
   },
   {
     "id": "engineering",
-    "name": "A",
-    "lat": 48.765686889960215,
-    "lng": -122.51286437179239,
+    "name": "Poet Tree",
+    "lat": 48.710861,
+    "lng": -122.488917,
     "description": "",
     "icon": null
   }

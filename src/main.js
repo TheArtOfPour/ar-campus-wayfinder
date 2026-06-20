@@ -10,6 +10,8 @@ let pois = {};
 let currentLocAR;
 let selectedLocationId = null;
 let showAllLocations = true;
+let appInstance = null;
+let currentHeading = 0;
 
 // Scene setup with A-Frame style component pattern
 function createScene(app) {
@@ -224,6 +226,7 @@ async function initAR() {
     // Listen for GPS position updates and update POI positions
     currentLocAR.on('gpsupdate', (ev) => {
       updatePOIPositions();
+      updateDebugPanel(ev);
     });
     
     // Handle GPS errors
@@ -250,6 +253,9 @@ async function initAR() {
     await currentLocAR.startGps();
     
     console.log('AR app initialized with', locations.length, 'POIs');
+    
+    // Store app instance globally for visibility change handling
+    appInstance = app;
     
     return { app, currentLocAR };
     
@@ -331,10 +337,58 @@ function updatePOIPositions() {
   });
 }
 
+// Update debug panel with GPS and compass data
+function updateDebugPanel(gpsEvent) {
+  const latEl = document.getElementById('debug-lat');
+  const lngEl = document.getElementById('debug-lng');
+  const accuracyEl = document.getElementById('debug-accuracy');
+  const headingEl = document.getElementById('debug-heading');
+  
+  if (gpsEvent && gpsEvent.position) {
+    const coords = gpsEvent.position.coords;
+    if (latEl) latEl.textContent = coords.latitude.toFixed(6);
+    if (lngEl) lngEl.textContent = coords.longitude.toFixed(6);
+    if (accuracyEl) accuracyEl.textContent = coords.accuracy ? coords.accuracy.toFixed(1) + 'm' : '--';
+  }
+  
+  if (headingEl) headingEl.textContent = currentHeading.toFixed(1) + '°';
+  
+  // Update compass needle rotation
+  const needle = document.getElementById('compass-needle');
+  if (needle) {
+    needle.style.transform = `translate(-50%, -50%) rotate(${currentHeading}deg)`;
+  }
+}
+
+// Listen for device orientation to get compass heading
+function setupCompassListener() {
+  if ('ondeviceorientationabsolute' in window) {
+    window.addEventListener('deviceorientationabsolute', (event) => {
+      if (event.alpha !== null) {
+        currentHeading = event.alpha;
+        updateDebugPanel(null);
+      }
+    });
+  } else if ('ondeviceorientation' in window) {
+    window.addEventListener('deviceorientation', (event) => {
+      if (event.webkitCompassHeading) {
+        currentHeading = event.webkitCompassHeading;
+        updateDebugPanel(null);
+      } else if (event.alpha !== null) {
+        currentHeading = 360 - event.alpha;
+        updateDebugPanel(null);
+      }
+    });
+  }
+}
+
 // Main initialization function called from HTML
 export async function init() {
   try {
     const { currentLocAR: locarInstance } = await initAR();
+    
+    // Set up compass listener for device orientation
+    setupCompassListener();
     
     // Check if GPS is working properly
     checkGPSStatus();
@@ -378,6 +432,23 @@ export async function init() {
       pois[key].visible = true;
     });
     
+    // Handle visibility change to prevent camera freeze when returning to page
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && appInstance) {
+        console.log('Page became visible, restarting AR...');
+        try {
+          // Clean up old instance
+          if (currentLocAR) {
+            currentLocAR.stop();
+          }
+          // Reinitialize AR
+          await initAR();
+        } catch (error) {
+          console.error('Error restarting AR:', error);
+        }
+      }
+    });
+    
   } catch (error) {
     console.error('Failed to initialize:', error);
     document.body.innerHTML = '<div style="padding:20px;color:red;"><h1>Error</h1><p>AR initialization failed. Please ensure you are using a device with GPS and compass support, and that you have granted the necessary permissions.</p><p><strong>Note:</strong> This app requires HTTPS or localhost to work properly due to browser security requirements for sensor access.</p></div>';
@@ -386,6 +457,29 @@ export async function init() {
 
 // Expose init globally
 window.initARApp = init;
+
+// Load and display version info
+async function loadVersionInfo() {
+  try {
+    const response = await fetch('/version.json');
+    if (response.ok) {
+      const versionInfo = await response.json();
+      const versionDisplay = document.getElementById('version-display');
+      if (versionDisplay) {
+        versionDisplay.textContent = `v${versionInfo.version} (${versionInfo.branchName})`;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load version info:', error);
+    const versionDisplay = document.getElementById('version-display');
+    if (versionDisplay) {
+      versionDisplay.textContent = 'vdev';
+    }
+  }
+}
+
+// Load version info on page load
+loadVersionInfo();
 
 // Check GPS status and show permission notice if needed
 function checkGPSStatus() {
