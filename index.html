@@ -439,6 +439,10 @@
       // Add to LocAR which will position it at GPS coordinates
       currentLocAR.add(group, lng, lat);
 
+      // Store reference for later updates
+      if (!group.userData) group.userData = {};
+      group.userData.locationId = name;
+
       return group;
     }
 
