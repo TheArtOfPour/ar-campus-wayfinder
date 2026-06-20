@@ -1,325 +1,424 @@
+// AR Campus Wayfinder v2 - Main Application Logic
+// This file is loaded via import in index.html
+
 import { App } from 'locar';
 
-// Use THREE from A-Frame (loaded globally)
 const THREE = window.THREE;
-
-// Campus locations data (GPS coordinates + info)
 const LOCATIONS_URL = './locations.json';
-const VERSION_JSON_URL = '/version.json';
 
-// Store for loaded locations and POI objects
 let locations = [];
-let pois = {};
 let currentLocAR;
-let selectedLocationId = null;
-let appInstance = null;
+let poiEntities = {};
+let filteredLocationId = null;
 
-// Handle browser visibility changes to prevent camera freeze
-function setupVisibilityHandler() {
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && appInstance) {
-      // Pause when app becomes hidden
-      console.log('App hidden, pausing AR');
-      if (currentLocAR?.pause) currentLocAR.pause();
-    } else if (!document.hidden && appInstance) {
-      // Resume when app becomes visible again
-      console.log('App visible, resuming AR');
-      if (currentLocAR?.resume) currentLocAR.resume();
-    }
-  });
+// Helper to calculate distance using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
-// Load version info from version.json
-async function loadVersionInfo() {
-  try {
-    const response = await fetch(VERSION_JSON_URL);
-    if (response.ok) {
-      const versionInfo = await response.json();
-      updateVersionDisplay(versionInfo.version, versionInfo.branchName);
-    } else {
-      updateVersionDisplay('dev', 'unknown');
-    }
-  } catch (error) {
-    console.warn('Could not load version info:', error);
-    updateVersionDisplay('dev', 'unknown');
-  }
+function formatDistance(km) {
+  if (km < 0.5) return `${Math.round(km * 1000)} m`;
+  if (km < 10) return `${(km * 10).toFixed(1) / 10} km`;
+  return `${km.toFixed(1)} km`;
 }
 
-// Update version display element
-function updateVersionDisplay(version, branchName = '') {
-  const versionEl = document.getElementById('version-display');
-  if (versionEl) {
-    if (branchName && branchName !== 'unknown') {
-      versionEl.textContent = `v${version} (${branchName})`;
-    } else {
-      versionEl.textContent = `v${version}`;
-    }
-  }
-}
-
-// Create POI marker with text and icon
-function createPOIMarker(location, isHighlighted = false) {
+// Create teardrop marker geometry
+function createTeardropGeometry(color = '#667eea', customIconUrl = null) {
   const group = new THREE.Group();
 
-  // Create the text sprite first to get its actual dimensions
-  const textSprite = createTextSprite(location.name, '#000000'); // Always black
-  
-  // Get the actual dimensions from the text sprite's scale
-  const textWidth = textSprite.scale.x;
-  const textHeight = textSprite.scale.y;
-  
-  // Add padding around text for the green backdrop
-  const paddingX = 15;  // Extra width on each side
-  const paddingY = 8;   // Extra height on top/bottom
-  
-  const backdropWidth = textWidth + paddingX * 2;
-  const backdropHeight = textHeight + paddingY * 2;
-  const color = isHighlighted ? 0x4facfe : 0x00f260;
+  if (customIconUrl) {
+    const texture = new THREE.TextureLoader().load(customIconUrl);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(1.5, 2, 1);
+    group.add(sprite);
+  } else {
+    // Create teardrop using path
+    const path = new THREE.Shape();
+    path.moveTo(0, -1);
+    path.bezierCurveTo(-1.2, -1, -1.5, 0.8, 0, 2);
+    path.bezierCurveTo(1.5, 0.8, 1.2, -1, 0, -1);
 
-  // Create a sprite material (always faces camera) - rectangular for better text backing
-  const rectSpriteMaterial = new THREE.SpriteMaterial({
-    color: color,
-    transparent: true,
-    opacity: 0.9,
-    depthTest: false  // Important: ensures sprites render on top
-  });
-  
-  // Make the sprite face the camera automatically and be rectangular
-  const rectSprite = new THREE.Sprite(rectSpriteMaterial);
-  rectSprite.scale.set(backdropWidth, backdropHeight, 1);
-  
-  group.add(rectSprite);
+    const extrudeSettings = {
+      steps: 2,
+      depth: 0.2,
+      bevelEnabled: true,
+      bevelThickness: 0.1,
+      bevelSize: 0.3,
+      bevelSegments: 4
+    };
 
-  // Add text sprite centered over the green backdrop (slightly forward on Z-axis)
-  textSprite.position.set(0, 0, 1); // Centered, Z=1 brings it forward
-  group.add(textSprite);
+    const geometry = new THREE.ExtrudeGeometry(path, extrudeSettings);
+    geometry.center();
+
+    const material = new THREE.MeshStandardMaterial({ 
+      color: color,
+      roughness: 0.3,
+      metalness: 0.1
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    group.add(mesh);
+
+    // White border for visibility
+    const borderMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xffffff,
+      side: THREE.BackSide
+    });
+    const borderMesh = new THREE.Mesh(geometry.clone(), borderMaterial);
+    borderMesh.scale.set(1.05, 1.05, 1.05);
+    group.add(borderMesh);
+
+    // Arrow indicator on top
+    const arrowGeo = new THREE.ConeGeometry(0.2, 0.4, 8);
+    arrowGeo.rotateX(Math.PI / 2);
+    const arrowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+    arrow.position.y = 1;
+    group.add(arrow);
+  }
 
   return group;
 }
 
-// Create text sprite from canvas
-function createTextSprite(message, color) {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.font = 'Bold 160px Arial'; // Increased font size for better readability
-  const padding = 8;
-  const metrics = ctx.measureText(message);
-  const textWidth = metrics.width;
+function updateDistances() {
+  if (!currentLocAR || locations.length === 0) return;
 
-  // Match canvas aspect ratio to sprite scale (45:12 ≈ 3.75:1)
-  canvas.width = textWidth + padding * 2;
-  canvas.height = Math.round(canvas.width / 3.75);
+  const gpsData = currentLocAR.gps;
+  if (!gpsData || !gpsData.latitude || !gpsData.longitude) return;
 
-  ctx.fillStyle = color;
-  ctx.font = 'Bold 160px Arial';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(message, padding, canvas.height / 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture });
-  const sprite = new THREE.Sprite(material);
-  // Scale matches the actual canvas dimensions
-  sprite.scale.set(canvas.width, canvas.height, 1);
-
-  return sprite;
+  Object.keys(poiEntities).forEach(id => {
+    const poiEntity = poiEntities[id];
+    if (poiEntity && poiEntity.location) {
+      const loc = poiEntity.location;
+      const distance = calculateDistance(
+        gpsData.latitude, gpsData.longitude,
+        loc.lat, loc.lng
+      );
+      
+      if (poiEntity.distanceTextEntity) {
+        poiEntity.distanceTextEntity.setAttribute('text', 'value', formatDistance(distance));
+      }
+    }
+  });
 }
 
-// Load locations from JSON file
-async function loadLocations() {
-  try {
-    const response = await fetch(LOCATIONS_URL);
-    if (!response.ok) throw new Error('Failed to load locations.json');
-    return await response.json();
-  } catch (error) {
-    console.error('Error loading locations:', error);
-    // Default sample data for debugging
-    return [
-      { id: "R", name: "Revels", lat: 48.711359, lng: -122.489252 },
-      { id: "S", name: "S & S", lat: 48.711321, lng: -122.488509 },
-      { id: "M", name: "M & M", lat: 48.711314, lng: -122.487736 },
-      { id: "RR", name: "Roger", lat: 48.713721, lng: -122.489305 },
-      { id: "H", name: "H & L", lat: 48.711920, lng: -122.491269 }
-    ];
-  }
-}
+setInterval(updateDistances, 5000);
 
-// Initialize AR app
-async function initAR() {
+async function initGPS() {
   const app = new App({
-    cameraOptions: { hFov: 80, near: 0.001, far: 1000 },
-    rendererOptions: { alpha: true, antialias: true }
+    cameraOptions: { hFov: 80, near: 0.1, far: 1000 }
   });
 
   try {
     currentLocAR = await app.start();
-    
-    // Track compass heading via GPS callback
-    function updateCompassHeading(heading) {
-      const needleEl = document.getElementById('compass-needle');
-      if (needleEl) {
-        // Rotate the compass needle based on device heading
-        // Use rotateZ to append rotation without overriding transform-origin
-        needleEl.style.transform = `translate(-50%, -50%) rotate(${360 - heading}deg)`;
-      }
-    }
-    
-    // Add GPS callback for heading updates
-    currentLocAR.on('gpsupdate', (data) => {
-      if (data.heading !== null && data.heading !== undefined && !isNaN(data.heading)) {
-        // Compass rotates opposite to device heading: 0°=N, 90°=E, etc.
-        updateCompassHeading(data.heading);
-      }
-    });
-
-    // Load locations first (we need these for POIs)
-    locations = await loadLocations();
-    console.log('Loaded', locations.length, 'locations');
-
-    // CRITICAL: Establish a world origin BEFORE adding POIs!
-    // locar.add() requires an initial position to be established via startGps()
-    // We use fakeGps with the first location to establish world origin immediately
     await currentLocAR.startGps();
-    
-    // Use the first location's coordinates to establish world origin
+
     if (locations.length > 0) {
       const [firstLocation] = locations;
-      // fakeGps(lon, lat, elevation, accuracy)
       currentLocAR.fakeGps(firstLocation.lng, firstLocation.lat, 0, 10);
-      console.log('World origin established with fakeGPS at', firstLocation.name);
     }
-    
-    console.log('GPS tracking started');
 
-    // Now add POI markers for each location using locar.add()
-    locations.forEach(location => {
-      const marker = createPOIMarker(location, false);
-      pois[location.id] = marker;
-      
-      // Use locar.add() to position POIs by GPS coordinates
-      currentLocAR.add(marker, location.lng, location.lat);
-      console.log(`Added POI: ${location.name} at (${location.lat}, ${location.lng})`);
+    currentLocAR.on('gpsupdate', (data) => {
+      if (data.heading !== null && !isNaN(data.heading)) {
+        const needle = document.getElementById('compass-needle');
+        if (needle) {
+          needle.style.transform = `translate(-50%, -50%) rotate(${360 - data.heading}deg)`;
+        }
+      }
     });
 
-    console.log('AR app initialized with', locations.length, 'POIs');
-    appInstance = app;
-
-    return { app, currentLocAR };
+    return app;
   } catch (error) {
-    console.error('Error initializing AR:', error);
-    alert(`AR initialization failed: ${error.message}`);
+    console.error('GPS initialization error:', error);
     throw error;
   }
 }
 
-// Handle user selecting a location
-function selectLocation(id) {
-  selectedLocationId = id;
+function createPOIs() {
+  const container = document.getElementById('poi-container');
   
-  // Show only the selected POI - use visible property on sprites within group
-  Object.keys(pois).forEach(key => {
-    const poig = pois[key];
-    if (poig && poig.children) {
-      poig.children.forEach(child => child.visible = (key === id));
-    }
+  if (!currentLocAR || !THREE) return;
+
+  for (const loc of locations) {
+    const markerGroup = createTeardropMarker(loc.lat, loc.lng, loc.name, loc.description, loc.icon);
+    container.appendChild(markerGroup);
+
+    poiEntities[loc.id] = markerGroup;
+    markerGroup.location = loc;
+
+    // Distance text entity
+    const distanceTextEntity = document.createElement('a-text');
+    distanceTextEntity.setAttribute('position', '0 -2 0');
+    distanceTextEntity.setAttribute('color', '#ffffff');
+    distanceTextEntity.setAttribute('align', 'center');
+    distanceTextEntity.setAttribute('width', '4');
+    markerGroup.appendChild(distanceTextEntity);
+
+    poiEntities[loc.id].distanceTextEntity = distanceTextEntity;
+  }
+
+  console.log(`Created ${locations.length} POI entities`);
+}
+
+function createTeardropMarker(lat, lng, name, description, customIconUrl) {
+  const group = new THREE.Group();
+  
+  // Position using LocAR.js conversion
+  const position = currentLocAR.convertGpsCoordsToVector3(lng, lat);
+  group.position.copy(position);
+
+  const markerGeometry = createTeardropGeometry('#667eea', customIconUrl);
+  group.add(markerGeometry);
+
+  return group;
+}
+
+function getHoveredPOI() {
+  const camera = document.getElementById('cameraRig').object3D;
+  const raycaster = new THREE.Raycaster();
+  
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  
+  const pois = Object.values(poiEntities).filter(p => p && p.visible !== false);
+  if (pois.length === 0) return null;
+
+  const intersectedMeshes = [];
+  pois.forEach(p => {
+    p.traverse(child => { if (child.isMesh) intersectedMeshes.push(child); });
   });
 
-  document.getElementById('search-input').value = '';
-  renderLocationInfo(id);
-}
+  const intersects = raycaster.intersectObjects(intersectedMeshes);
 
-// Handle user deselection (show all)
-function setShowAllLocations() {
-  selectedLocationId = null;
-  
-  // Show all POIs
-  Object.keys(pois).forEach(key => {
-    const poig = pois[key];
-    if (poig && poig.children) {
-      poig.children.forEach(child => child.visible = true);
+  if (intersects.length > 0 && intersects[0].distance < 8) {
+    for (const poi of pois) {
+      if (poi === intersects[0].object || 
+          poi.children.includes(intersects[0].object)) {
+        return poi;
+      }
     }
-  });
-
-  document.getElementById('location-info').innerHTML = `
-    <h3>Campus Wayfinder</h3>
-    <p style="margin-top:10px;">Select a location on the map or search to find buildings and points of interest.</p>
-  `;
+  }
+  
+  return null;
 }
 
-// Render location info in the UI panel
-function renderLocationInfo(id) {
-  const location = locations.find(l => l.id === id);
-  if (!location) return;
+function updateArrowIndicator() {
+  const camera = document.getElementById('cameraRig').object3D;
+  const cameraRotationY = camera.rotation.y;
 
-  document.getElementById('location-info').innerHTML = `
-    <h3>${location.name}</h3>
-    <p style="margin-top:10px;">GPS: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}</p>
-    <button class="reset-button" onclick="window.app.resetToAll()" style="margin-top:15px;">View All Locations</button>
-  `;
-}
+  if (filteredLocationId && poiEntities[filteredLocationId]) {
+    const targetPOI = poiEntities[filteredLocationId];
+    const targetPos = new THREE.Vector3();
+    targetPOI.getWorldPosition(targetPos);
 
-// Search functionality
-function searchLocations(query) {
-  const normalizedQuery = query.toLowerCase();
-  return locations.filter(location => location.name.toLowerCase().includes(normalizedQuery));
-}
+    const cameraPos = new THREE.Vector3();
+    camera.getWorldPosition(cameraPos);
 
-// Main initialization function called from HTML
-export async function init() {
-  try {
-    // Load version info first (shows in bottom-left corner)
-    loadVersionInfo();
+    const dx = targetPos.x - cameraPos.x;
+    const dz = targetPos.z - cameraPos.z;
+    let angle = Math.atan2(dx, dz);
     
-    await initAR();
+    let arrowRotation = (angle * 180 / Math.PI) - (cameraRotationY * 180 / Math.PI);
+    arrowRotation = ((arrowRotation % 360) + 360) % 360;
+
+    const arrowEl = document.getElementById('arrow-indicator');
+    arrowEl.setAttribute('rotation', `0 ${arrowRotation} 0`);
     
-    // Setup visibility handler to prevent camera freeze
-    setupVisibilityHandler();
+    const dist = calculateDistance(
+      currentLocAR.gps.latitude,
+      currentLocAR.gps.longitude,
+      poiEntities[filteredLocationId].location.lat,
+      poiEntities[filteredLocationId].location.lng
+    );
 
-    // Show all locations initially
-    Object.keys(pois).forEach(key => pois[key].visible = true);
-
-    // Set up search functionality
-    document.getElementById('search-input').addEventListener('input', (e) => {
-      const query = e.target.value.trim().toLowerCase();
-      const resultsContainer = document.getElementById('search-results');
-
-      if (!query) {
-        setShowAllLocations();
-        resultsContainer.innerHTML = '';
-        return;
-      }
-
-      const results = searchLocations(query);
-      resultsContainer.innerHTML = '';
-
-      if (results.length === 0) {
-        resultsContainer.innerHTML = '<p style="padding:15px;">No locations found</p>';
-      } else {
-        results.forEach(result => {
-          const item = document.createElement('div');
-          item.className = 'search-result-item';
-          item.innerHTML = `<strong>${result.name}</strong>`;
-          item.onclick = () => selectLocation(result.id);
-          resultsContainer.appendChild(item);
-        });
-      }
-    });
-
-    // Expose reset function globally
-    window.app = {
-      resetToAll: setShowAllLocations,
-      locations: locations
-    };
-
-  } catch (error) {
-    console.error('Failed to initialize:', error);
-    document.body.innerHTML = `
-      <div style="padding:20px;color:red;">
-        <h1>Error</h1>
-        <p>AR initialization failed. Please ensure you are using a device with GPS and compass support.</p>
-        <p><strong>Note:</strong> This app requires HTTPS or localhost to work properly.</p>
-      </div>`;
+    arrowEl.setAttribute('visible', dist > 1.5);
+  } else {
+    document.getElementById('arrow-indicator').setAttribute('visible', 'false');
   }
 }
 
-// Expose init globally
+function updateHoverUI(hoveredPOI) {
+  const card = document.getElementById('location-card');
+  
+  if (hoveredPOI && hoveredPOI.location) {
+    const loc = hoveredPOI.location;
+    
+    document.getElementById('card-title').textContent = loc.name;
+    
+    const distanceEl = document.getElementById('card-distance');
+    const descEl = document.getElementById('card-description');
+
+    if (filteredLocationId === loc.id) {
+      distanceEl.textContent = 'Selected location';
+      if (loc.description) {
+        descEl.textContent = loc.description;
+        descEl.style.display = 'block';
+      } else {
+        descEl.style.display = 'none';
+      }
+    } else {
+      const gpsData = currentLocAR?.gps;
+      if (gpsData) {
+        const dist = calculateDistance(
+          gpsData.latitude, gpsData.longitude,
+          loc.lat, loc.lng
+        );
+        distanceEl.textContent = formatDistance(dist);
+      }
+      
+      descEl.style.display = 'none';
+    }
+
+    const iconEl = document.getElementById('card-icon');
+    if (loc.icon) {
+      iconEl.className = 'location-icon custom';
+      iconEl.style.backgroundImage = `url(${loc.icon})`;
+    } else {
+      iconEl.className = 'location-icon';
+      iconEl.textContent = '📍';
+    }
+
+    card.classList.add('visible');
+  } else if (!filteredLocationId) {
+    card.classList.remove('visible');
+  }
+}
+
+function setupSearch() {
+  const input = document.getElementById('search-input');
+  const resultsContainer = document.getElementById('search-results');
+
+  input.addEventListener('input', (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    
+    if (!query) {
+      filteredLocationId = null;
+      resultsContainer.innerHTML = '';
+      resultsContainer.classList.remove('open');
+      
+      Object.keys(poiEntities).forEach(id => {
+        if (poiEntities[id]) poiEntities[id].visible = true;
+      });
+      return;
+    }
+
+    const matches = locations.filter(l => 
+      l.name.toLowerCase().includes(query)
+    );
+
+    resultsContainer.innerHTML = '';
+    
+    if (matches.length > 0) {
+      resultsContainer.classList.add('open');
+      
+      matches.forEach(match => {
+        const item = document.createElement('div');
+        item.className = 'search-item';
+        item.innerHTML = `
+          <strong>${match.name}</strong>
+          ${match.description ? `<span>${match.description.substring(0, 60)}...</span>` : ''}
+        `;
+        
+        item.addEventListener('click', () => {
+          selectLocation(match.id);
+        });
+        
+        resultsContainer.appendChild(item);
+      });
+    } else {
+      resultsContainer.classList.remove('open');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target)) {
+      resultsContainer.classList.remove('open');
+    }
+  });
+}
+
+function selectLocation(id) {
+  filteredLocationId = id;
+  
+  Object.keys(poiEntities).forEach(key => {
+    const poig = poiEntities[key];
+    if (poig && poig.children) {
+      poig.visible = (key === id);
+      poig.children.forEach(child => {
+        child.visible = (key === id);
+      });
+    }
+  });
+
+  const loc = locations.find(l => l.id === id);
+  if (loc) {
+    document.getElementById('card-title').textContent = loc.name;
+    updateDistances();
+    
+    const descEl = document.getElementById('card-description');
+    if (loc.description) {
+      descEl.textContent = loc.description;
+      descEl.style.display = 'block';
+    } else {
+      descEl.style.display = 'none';
+    }
+    
+    document.getElementById('location-card').classList.add('visible');
+  }
+
+  document.getElementById('search-input').value = '';
+}
+
+async function updateVersionDisplay() {
+  try {
+    const response = await fetch('/version.json');
+    if (response.ok) {
+      const info = await response.json();
+      const versionEl = document.getElementById('version-display');
+      if (versionEl) {
+        versionEl.textContent = `v${info.version} (${info.branchName || 'prod'})`;
+      }
+    }
+  } catch (e) {
+    console.log('Could not load version info');
+  }
+}
+
+async function init() {
+  try {
+    await updateVersionDisplay();
+    
+    const response = await fetch(LOCATIONS_URL);
+    if (response.ok) {
+      locations = await response.json();
+    } else {
+      // Fallback data for testing
+      locations = [
+        { id: "R", name: "Revels Hall", lat: 48.711359, lng: -122.489252 },
+        { id: "S", name: "Student Union", lat: 48.711321, lng: -122.488509 },
+        { id: "M", name: "Main Building", lat: 48.711314, lng: -122.487736 }
+      ];
+    }
+
+    await initGPS();
+    createPOIs();
+    setupSearch();
+    updateDistances();
+
+    console.log('AR Wayfinder v2 initialized successfully');
+
+  } catch (error) {
+    console.error('Initialization error:', error);
+    alert(`Failed to initialize AR: ${error.message}`);
+  }
+}
+
+// Expose for global use
 window.initARApp = init;
