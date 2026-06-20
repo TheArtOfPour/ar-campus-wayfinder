@@ -665,9 +665,15 @@
       Object.keys(poiEntities).forEach(key => {
         const poig = poiEntities[key];
         if (poig && poig.children) {
-          poig.visible = (key === id);
-          poig.children.forEach(child => {
-            child.visible = (key === id);
+          // Use A-Frame's setAttribute for visibility
+          const visibleState = (key === id);
+          poig.setAttribute('visible', visibleState.toString());
+          
+          // Also set children visibility recursively
+          poig.traverse(child => {
+            if (child.isObject3D) {
+              child.visible = visibleState;
+            }
           });
         }
       });
