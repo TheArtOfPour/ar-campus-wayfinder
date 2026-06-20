@@ -122,14 +122,14 @@
       position: absolute;
       top: 75px;
       left: 50%;
-      transform: X(-50%);
+      transform: translateX(-50%);
       width: 90%;
-      max-width: 400px;
+      max-width: 380px;
       background: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
       overflow: hidden;
-      max-height: 300px;
+      max-height: 40vh;
       overflow-y: auto;
     }
     
@@ -337,137 +337,43 @@
       pointer-events: none;
     }
     
-    /* Debug info panel */
-    .debug-panel {
-      position: absolute;
-      top: 70px;
-      right: 15px;
-      width: 220px;
-      background: rgba(0, 0, 0, 0.8);
-      border-radius: 12px;
-      padding: 15px;
-      color: #fff;
-      font-size: 12px;
-      z-index: 90;
-      pointer-events: auto;
-      display: none;
-    }
-    
-    .debug-panel.active {
-      display: block;
-    }
-    
-    .debug-panel h4 {
-      margin: 0 0 10px 0;
-      font-size: 14px;
-      color: #4facfe;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      padding-bottom: 8px;
-    }
-    
-    .debug-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      font-family: monospace;
-    }
-    
-    .debug-label {
-      color: rgba(255, 255, 255, 0.6);
-    }
-    
-    .debug-value {
-      color: #00f260;
-    }
-    
-    /* Compass visualization */
+    /* Compass in bottom right corner */
     .compass-container {
-      width: 80px;
-      height: 80px;
-      margin: 10px auto;
-      position: relative;
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      width: 60px;
+      height: 60px;
+      z-index: 90;
     }
-    
+
     .compass-ring {
       width: 100%;
       height: 100%;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.4);
       border-radius: 50%;
       position: relative;
     }
-    
+
     .compass-needle {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 4px;
-      height: 35px;
+      width: 3px;
+      height: 28px;
       background: linear-gradient(to bottom, #ff5722 50%, #fff 50%);
       transform-origin: center center;
       transform: translate(-50%, -50%);
-      transition: transform 0.1s ease-out;
     }
-    
+
     .compass-north {
       position: absolute;
-      top: 2px;
+      top: 3px;
       left: 50%;
       transform: translateX(-50%);
       color: #ff5722;
-      font-size: 12px;
+      font-size: 9px;
       font-weight: bold;
-    }
-    
-    .compass-east {
-      position: absolute;
-      right: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 10px;
-    }
-    
-    .compass-south {
-      position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 10px;
-    }
-    
-    .compass-west {
-      position: absolute;
-      left: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 10px;
-    }
-    
-    /* Debug toggle button */
-    .debug-toggle {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      width: 40px;
-      height: 40px;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 95;
-      pointer-events: auto;
-    }
-    
-    .debug-toggle:hover {
-      background: rgba(0, 0, 0, 0.8);
-      color: #fff;
     }
   </style>
 </head>
@@ -480,42 +386,18 @@
     </div>
     <button class="start-button" onclick="window.startARApp()">Start AR Experience</button>
   </div>
-  
+
   <!-- Info button - hidden until start is clicked -->
   <button class="info-button" onclick="toggleInfoPanel()" style="display:none;">?</button>
-  
-  <!-- Debug toggle button - hidden until start is clicked -->
-  <button class="debug-toggle" onclick="toggleDebugPanel()" style="display:none;">🔧</button>
-  
-  <!-- Debug panel -->
-  <div class="debug-panel" id="debug-panel">
-    <h4>Debug Info</h4>
-    <div class="debug-row">
-      <span class="debug-label">Lat:</span>
-      <span class="debug-value" id="debug-lat">--</span>
-    </div>
-    <div class="debug-row">
-      <span class="debug-label">Lng:</span>
-      <span class="debug-value" id="debug-lng">--</span>
-    </div>
-    <div class="debug-row">
-      <span class="debug-label">Accuracy:</span>
-      <span class="debug-value" id="debug-accuracy">--</span>
-    </div>
-    <div class="debug-row">
-      <span class="debug-label">Heading:</span>
-      <span class="debug-value" id="debug-heading">--</span>
-    </div>
-    <div class="compass-container">
-      <div class="compass-ring">
-        <div class="compass-north">N</div>
-        <div class="compass-east">E</div>
-        <div class="compass-south">S</div>
-        <div class="compass-west">W</div>
-        <div class="compass-needle" id="compass-needle"></div>
-      </div>
+
+  <!-- Compass in bottom right corner -->
+  <div class="compass-container">
+    <div class="compass-ring">
+      <div class="compass-north">N</div>
+      <div class="compass-needle"></div>
     </div>
   </div>
+
   <div class="ui-overlay">
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search locations..." autocomplete="off">
@@ -591,9 +473,6 @@
       // Show UI elements
       const infoButton = document.querySelector('.info-button');
       if (infoButton) infoButton.style.display = 'block';
-      
-      const debugToggle = document.querySelector('.debug-toggle');
-      if (debugToggle) debugToggle.style.display = 'block';
       
       try {
         await initApp();
