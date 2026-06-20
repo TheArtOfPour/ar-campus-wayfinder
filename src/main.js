@@ -119,12 +119,14 @@ async function initGPS() {
 
   try {
     currentLocAR = await app.start();
-    await currentLocAR.startGps();
-
+    
+    // Establish world origin with fake GPS
     if (locations.length > 0) {
       const [firstLocation] = locations;
       currentLocAR.fakeGps(firstLocation.lng, firstLocation.lat, 0, 10);
     }
+    
+    await currentLocAR.startGps();
 
     currentLocAR.on('gpsupdate', (data) => {
       if (data.heading !== null && !isNaN(data.heading)) {
@@ -148,13 +150,13 @@ function createPOIs() {
   if (!currentLocAR || !THREE) return;
 
   for (const loc of locations) {
+    // Create POI marker - locar.add() will add it to the scene automatically
     const markerGroup = createTeardropMarker(loc.lat, loc.lng, loc.name, loc.description, loc.icon);
-    container.appendChild(markerGroup);
 
     poiEntities[loc.id] = markerGroup;
     markerGroup.location = loc;
 
-    // Distance text entity
+    // Distance text entity (added as child of marker group)
     const distanceTextEntity = document.createElement('a-text');
     distanceTextEntity.setAttribute('position', '0 -2 0');
     distanceTextEntity.setAttribute('color', '#ffffff');
@@ -171,12 +173,12 @@ function createPOIs() {
 function createTeardropMarker(lat, lng, name, description, customIconUrl) {
   const group = new THREE.Group();
   
-  // Position using LocAR.js conversion
-  const position = currentLocAR.convertGpsCoordsToVector3(lng, lat);
-  group.position.copy(position);
-
+  // Create the marker geometry first
   const markerGeometry = createTeardropGeometry('#667eea', customIconUrl);
   group.add(markerGeometry);
+
+  // Add to LocAR which will position it at GPS coordinates
+  currentLocAR.add(group, lng, lat);
 
   return group;
 }
