@@ -1,5 +1,7 @@
-import * as THREE from 'three';
 import { App } from 'locar';
+
+// Use THREE from A-Frame (loaded globally)
+const THREE = window.THREE;
 
 // Campus locations data (GPS coordinates + info)
 const LOCATIONS_URL = './locations.json';
@@ -330,6 +332,10 @@ function searchLocations(query) {
 function updatePOIPositions() {
   if (!currentLocAR || !locations.length) return;
 
+  console.log('=== Updating POI Positions ===');
+  console.log('Number of locations:', locations.length);
+  console.log('Number of POIs:', Object.keys(pois).length);
+
   // For each location, calculate its position relative to user's current GPS
   locations.forEach(location => {
     const marker = pois[location.id];
@@ -337,9 +343,12 @@ function updatePOIPositions() {
       try {
         const vector = currentLocAR.convertGpsCoordsToVector3(location.lng, location.lat);
         marker.position.copy(vector);
+        console.log(`${location.name} (${location.id}): Lat=${location.lat}, Lng=${location.lng} -> Vector=(${vector.x.toFixed(2)}, ${vector.y.toFixed(2)}, ${vector.z.toFixed(2)})`);
       } catch (e) {
         console.warn('Could not convert GPS coords for', location.name, e);
       }
+    } else {
+      console.warn(`No marker found for ${location.name} (${location.id})`);
     }
   });
 }

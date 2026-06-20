@@ -150,8 +150,10 @@
     
     /* Location info panel */
     .location-info-container {
+      position: absolute;
       bottom: 15px;
       left: 50%;
+      transform: translateX(-50%);
       width: 90%;
       max-width: 360px;
       pointer-events: auto;
@@ -562,7 +564,6 @@
   <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.175.0/build/three.module.js",
         "locar": "https://unpkg.com/locar@0.2.2/dist/locar.js"
       }
     }
