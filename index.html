@@ -393,7 +393,10 @@
           if (data.heading !== null && !isNaN(data.heading)) {
             const needle = document.getElementById('compass-needle');
             if (needle) {
-              needle.style.transform = `translate(-50%, -50%) rotate(${360 - data.heading}deg)`;
+              // Convert heading to compass rotation (0° = North, 90° = East)
+              // Rotate counter-clockwise: 360 - heading gives degrees from north
+              const rotation = (360 - data.heading) % 360;
+              needle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
             }
           }
         });
@@ -433,32 +436,42 @@
       // Create an A-Frame entity to hold the marker (LocAR will control its position)
       const entity = document.createElement('a-entity');
       
-      // Add the visual geometry as a child using A-Frame primitives - scaled up for better visibility
-      const markerEntity = document.createElement('a-entity');
-      markerEntity.setAttribute('geometry', 'primitive: cone; radius: 1.2; height: 4.5; segments: 16');
-      markerEntity.setAttribute('material', 'color: #667eea');
-      markerEntity.setAttribute('rotation', '-90 0 180'); // Point upward
-      markerEntity.setAttribute('position', '0 -2 0');
+      // Use a teardrop shape that points upward - using sphere with cone on top
+      const markerGroup = document.createElement('a-entity');
+      markerGroup.setAttribute('position', '0 0 0');
       
-      // Add white border (slightly larger)
-      const borderEntity = document.createElement('a-entity');
-      borderEntity.setAttribute('geometry', 'primitive: cone; radius: 1.35; height: 4.5; segments: 16');
-      borderEntity.setAttribute('material', 'color: #ffffff; side: back');
-      borderEntity.setAttribute('rotation', '-90 0 180');
-      borderEntity.setAttribute('position', '0 -2 0');
+      // Base teardrop (ellipsoid)
+      const teardropBase = document.createElement('a-entity');
+      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 1.5; segment-width: 32');
+      teardropBase.setAttribute('material', 'color: #667eea; opacity: 0.9');
+      teardropBase.setAttribute('scale', '1 2 1'); // Stretch vertically to make teardrop shape
       
-      // Add text label above the marker
+      // White border (slightly larger, inverted sphere)
+      const border = document.createElement('a-entity');
+      border.setAttribute('geometry', 'primitive: sphere; radius: 1.58; segment-width: 32');
+      border.setAttribute('material', 'color: #ffffff; side: back');
+      border.setAttribute('scale', '1 2 1');
+      
+      // Top pointed tip (cone pointing up)
+      const tip = document.createElement('a-entity');
+      tip.setAttribute('geometry', 'primitive: cone; radius: 0.4; height: 1.5; segments: 8');
+      tip.setAttribute('material', 'color: #667eea');
+      tip.setAttribute('position', '0 2.25 0'); // Positioned at top of teardrop
+      
+      // Text label - use larger scale and brighter color
       const textEntity = document.createElement('a-text');
       textEntity.setAttribute('value', name);
-      textEntity.setAttribute('color', '#000000');
+      textEntity.setAttribute('color', '#333333');
       textEntity.setAttribute('align', 'center');
-      textEntity.setAttribute('width', '6');
-      textEntity.setAttribute('position', '0 2.5 0');
-      textEntity.setAttribute('scale', '1.2 1.2 1.2'); // Increase text size
+      textEntity.setAttribute('width', '8');
+      textEntity.setAttribute('position', '0 4.5 0');
+      textEntity.setAttribute('scale', '1.5 1.5 1.5');
       
-      markerEntity.appendChild(textEntity);
-      entity.appendChild(markerEntity);
-      entity.appendChild(borderEntity);
+      markerGroup.appendChild(teardropBase);
+      markerGroup.appendChild(border);
+      markerGroup.appendChild(tip);
+      entity.appendChild(markerGroup);
+      entity.appendChild(textEntity);
       
       // Add to LocAR which will position it at GPS coordinates
       currentLocAR.add(entity.object3D, lng, lat);
@@ -498,33 +511,48 @@
 
     function updateArrowIndicator() {
       const camera = document.getElementById('cameraRig').object3D;
-      const cameraRotationY = camera.rotation.y;
-
+      
       if (filteredLocationId && poiEntities[filteredLocationId]) {
         const targetPOI = poiEntities[filteredLocationId];
-        const targetPos = new THREE.Vector3();
-        targetPOI.getWorldPosition(targetPos);
+        if (!targetPOI.location) return;
 
-        const cameraPos = new THREE.Vector3();
-        camera.getWorldPosition(cameraPos);
+        // Calculate bearing from current GPS position to target POI
+        const gpsData = currentLocAR.gps;
+        if (!gpsData || !gpsData.latitude || !gpsData.longitude) return;
 
-        const dx = targetPos.x - cameraPos.x;
-        const dz = targetPos.z - cameraPos.z;
-        let angle = Math.atan2(dx, dz);
+        const loc = targetPOI.location;
         
-        let arrowRotation = (angle * 180 / Math.PI) - (cameraRotationY * 180 / Math.PI);
-        arrowRotation = ((arrowRotation % 360) + 360) % 360;
+        // Calculate bearing using haversine formula
+        const dLat = (loc.lat - gpsData.latitude) * Math.PI / 180;
+        const dLon = (loc.lng - gpsData.longitude) * Math.PI / 180;
+        const lat1 = gpsData.latitude * Math.PI / 180;
+        const lat2 = loc.lat * Math.PI / 180;
+        
+        let bearing = Math.atan2(
+          Math.sin(dLon) * Math.cos(lat2),
+          Math.cos(lat1) * Math.sin(lat2) - 
+          Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+        ) * 180 / Math.PI;
+
+        // Convert to compass bearing (0-360 degrees)
+        bearing = (bearing + 360) % 360;
+
+        // Get camera's yaw rotation
+        const yaw = (camera.rotation.y * 180 / Math.PI + 360) % 360;
+        
+        // Arrow should point toward the target relative to where camera is facing
+        let arrowRotation = bearing - yaw;
+        if (arrowRotation < -180) arrowRotation += 360;
+        else if (arrowRotation > 180) arrowRotation -= 360;
 
         const arrowEl = document.getElementById('arrow-indicator');
-        arrowEl.setAttribute('rotation', `0 ${arrowRotation} 0`);
-        
-        const dist = calculateDistance(
-          currentLocAR.gps.latitude,
-          currentLocAR.gps.longitude,
-          poiEntities[filteredLocationId].location.lat,
-          poiEntities[filteredLocationId].location.lng
-        );
+        arrowEl.setAttribute('rotation', `0 ${-arrowRotation} 0`);
+        arrowEl.setAttribute('visible', 'true');
 
+        // Calculate distance to determine when to show/hide
+        const dist = calculateDistance(gpsData.latitude, gpsData.longitude, loc.lat, loc.lng);
+        
+        // Hide if close enough to the target (within ~2 meters)
         arrowEl.setAttribute('visible', dist > 1.5);
       } else {
         document.getElementById('arrow-indicator').setAttribute('visible', 'false');
