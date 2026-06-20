@@ -14,6 +14,21 @@ let currentLocAR;
 let selectedLocationId = null;
 let appInstance = null;
 
+// Handle browser visibility changes to prevent camera freeze
+function setupVisibilityHandler() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && appInstance) {
+      // Pause when app becomes hidden
+      console.log('App hidden, pausing AR');
+      if (currentLocAR?.pause) currentLocAR.pause();
+    } else if (!document.hidden && appInstance) {
+      // Resume when app becomes visible again
+      console.log('App visible, resuming AR');
+      if (currentLocAR?.resume) currentLocAR.resume();
+    }
+  });
+}
+
 // Load version info from version.json
 async function loadVersionInfo() {
   try {
@@ -46,28 +61,30 @@ function updateVersionDisplay(version, branchName = '') {
 function createPOIMarker(location, isHighlighted = false) {
   const group = new THREE.Group();
 
-  // Main marker - floating circle above the ground (large for better visibility)
-  const radius = isHighlighted ? 30 : 20;
+  // Main marker - floating rectangle above the ground (large for better visibility)
+  const width = isHighlighted ? 60 : 40;
+  const height = isHighlighted ? 25 : 18;
   const color = isHighlighted ? 0x4facfe : 0x00f260;
 
-  // Create a sprite material (always faces camera)
+  // Create a sprite material (always faces camera) - rectangular for better text backing
   const spriteMaterial = new THREE.SpriteMaterial({
     color: color,
     transparent: true,
-    opacity: 0.8
+    opacity: 0.9,
+    depthTest: false  // Important: ensures sprites render on top
   });
   
-  // Make the sprite face the camera automatically
-  const circleSprite = new THREE.Sprite(spriteMaterial);
-  circleSprite.scale.set(radius * 2, radius * 2, 1); // Scale to make it circular in world space
-  circleSprite.position.y = radius + 10;
+  // Make the sprite face the camera automatically and be rectangular
+  const rectSprite = new THREE.Sprite(spriteMaterial);
+  rectSprite.scale.set(width, height, 1);
+  rectSprite.position.y = 5;  // Lower than text
   
-  group.add(circleSprite);
+  group.add(rectSprite);
 
-  // Add text sprite for the location name (positioned above circle)
+  // Add text sprite for the location name (positioned above rectangle)
   if (location.name) {
-    const textSprite = createTextSprite(location.name, isHighlighted ? '#ffffff' : '#000000');
-    textSprite.position.set(0, radius + 15, 0);
+    const textSprite = createTextSprite(location.name, '#000000'); // Always black
+    textSprite.position.set(0, height/2 + 35, 0);  // Above the rectangle
     group.add(textSprite);
   }
 
@@ -78,23 +95,23 @@ function createPOIMarker(location, isHighlighted = false) {
 function createTextSprite(message, color) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  ctx.font = 'Bold 140px Arial'; // Increased font size 10x
-  const padding = 6;
+  ctx.font = 'Bold 160px Arial'; // Increased font size for better readability
+  const padding = 8;
   const metrics = ctx.measureText(message);
   const textWidth = metrics.width;
 
   canvas.width = textWidth + padding * 2;
-  canvas.height = 280; // Increased height
+  canvas.height = 320; // Taller canvas for larger text
 
   ctx.fillStyle = color;
-  ctx.font = 'Bold 140px Arial';
+  ctx.font = 'Bold 160px Arial';
   ctx.textBaseline = 'middle';
   ctx.fillText(message, padding, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(35, 10, 1); // Increased scale 10x
+  sprite.scale.set(45, 12, 1); // Larger scale for better readability
 
   return sprite;
 }
@@ -127,6 +144,22 @@ async function initAR() {
 
   try {
     currentLocAR = await app.start();
+    
+    // Track compass heading via GPS callback
+    function updateCompassHeading(heading) {
+      const needleEl = document.getElementById('compass-needle');
+      if (needleEl) {
+        // Rotate the compass needle based on device heading
+        needleEl.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+      }
+    }
+    
+    // Add GPS callback for heading updates
+    currentLocAR.on('gpsupdate', (data) => {
+      if (data.heading !== null && data.heading !== undefined) {
+        updateCompassHeading(data.heading);
+      }
+    });
 
     // Load locations first (we need these for POIs)
     locations = await loadLocations();
@@ -172,9 +205,12 @@ async function initAR() {
 function selectLocation(id) {
   selectedLocationId = id;
   
-  // Show only the selected POI
+  // Show only the selected POI - use visible property on sprites within group
   Object.keys(pois).forEach(key => {
-    pois[key].visible = (key === id);
+    const poig = pois[key];
+    if (poig && poig.children) {
+      poig.children.forEach(child => child.visible = (key === id));
+    }
   });
 
   document.getElementById('search-input').value = '';
@@ -187,7 +223,10 @@ function setShowAllLocations() {
   
   // Show all POIs
   Object.keys(pois).forEach(key => {
-    pois[key].visible = true;
+    const poig = pois[key];
+    if (poig && poig.children) {
+      poig.children.forEach(child => child.visible = true);
+    }
   });
 
   document.getElementById('location-info').innerHTML = `
@@ -221,6 +260,9 @@ export async function init() {
     loadVersionInfo();
     
     await initAR();
+    
+    // Setup visibility handler to prevent camera freeze
+    setupVisibilityHandler();
 
     // Show all locations initially
     Object.keys(pois).forEach(key => pois[key].visible = true);
