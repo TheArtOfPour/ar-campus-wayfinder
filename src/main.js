@@ -221,6 +221,16 @@ async function initAR() {
     // Start the AR app (this will request permissions)
     currentLocAR = await app.start();
     
+    // Listen for GPS position updates and update POI positions
+    currentLocAR.on('gpsupdate', (ev) => {
+      updatePOIPositions();
+    });
+    
+    // Handle GPS errors
+    currentLocAR.on('gpserror', (error) => {
+      console.warn('GPS error:', error);
+    });
+    
     const scene = createScene(app);
     
     // Load locations
@@ -234,16 +244,6 @@ async function initAR() {
       // Store the marker and its location reference
       pois[location.id] = marker;
       scene.add(marker);
-    });
-    
-    // Listen for GPS position updates and update POI positions
-    currentLocAR.addEventListener('gpsupdate', (ev) => {
-      updatePOIPositions();
-    });
-    
-    // Handle GPS errors
-    currentLocAR.addEventListener('gpserror', (error) => {
-      console.warn('GPS error:', error);
     });
     
     // Start GPS tracking (must be called after app.start())
