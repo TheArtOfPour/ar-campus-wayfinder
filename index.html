@@ -134,7 +134,7 @@
     }
     .compass-needle {
       position: absolute; top: 50%; left: 50%;
-      width: 3px; height: 30px;
+      width: 4px; height: 32px;
       background: linear-gradient(to bottom, #ff5722 50%, #fff 50%);
       transform-origin: center center;
     }
@@ -394,9 +394,9 @@
             const needle = document.getElementById('compass-needle');
             if (needle) {
               // Convert heading to compass rotation (0° = North, 90° = East)
-              // Rotate counter-clockwise: 360 - heading gives degrees from north
+              // Use CSS transform-origin: center so we only need rotate()
               const rotation = (360 - data.heading) % 360;
-              needle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+              needle.style.transform = `rotate(${rotation}deg)`;
             }
           }
         });
@@ -436,23 +436,23 @@
       // Create a single A-Frame entity for LocAR positioning
       const entity = document.createElement('a-entity');
       
-      // Base teardrop (ellipsoid) - medium scale
+      // Base teardrop (ellipsoid) - larger scale for better visibility
       const teardropBase = document.createElement('a-entity');
-      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 0.5; segment-width: 24');
+      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 0.75; segment-width: 24');
       teardropBase.setAttribute('material', 'color: #667eea; opacity: 0.95');
       teardropBase.setAttribute('scale', '1 2 1'); // Stretch vertically to make teardrop shape
       
       // White border (slightly larger)
       const border = document.createElement('a-entity');
-      border.setAttribute('geometry', 'primitive: sphere; radius: 0.53; segment-width: 24');
+      border.setAttribute('geometry', 'primitive: sphere; radius: 0.8; segment-width: 24');
       border.setAttribute('material', 'color: #ffffff; side: back');
       border.setAttribute('scale', '1 2 1');
       
       // Top pointed tip (cone pointing up)
       const tip = document.createElement('a-entity');
-      tip.setAttribute('geometry', 'primitive: cone; radius: 0.25; height: 0.8; segments: 8');
+      tip.setAttribute('geometry', 'primitive: cone; radius: 0.35; height: 1; segments: 8');
       tip.setAttribute('material', 'color: #667eea');
-      tip.setAttribute('position', '0 1.6 0'); // Positioned at top of teardrop
+      tip.setAttribute('position', '0 2.4 0'); // Positioned at top of teardrop
       
       entity.appendChild(teardropBase);
       entity.appendChild(border);
@@ -463,8 +463,8 @@
       textEntity.setAttribute('value', name);
       textEntity.setAttribute('color', '#000000');
       textEntity.setAttribute('align', 'center');
-      textEntity.setAttribute('width', '3');
-      textEntity.setAttribute('position', '0 2.5 0');
+      textEntity.setAttribute('width', '5');
+      textEntity.setAttribute('position', '0 3.2 0');
       entity.appendChild(textEntity);
       
       // Add to LocAR which will position it at GPS coordinates
