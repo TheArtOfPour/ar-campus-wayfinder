@@ -433,51 +433,36 @@
     }
 
     function createTeardropMarker(lat, lng, name, description, customIconUrl) {
-      // Create an A-Frame entity to hold the marker (LocAR will control its position)
+      // Create a single A-Frame entity for LocAR positioning
       const entity = document.createElement('a-entity');
       
-      // Use a teardrop shape that points upward - using sphere with cone on top
-      const markerGroup = document.createElement('a-entity');
-      markerGroup.setAttribute('position', '0 0 0');
-      
-      // Base teardrop (ellipsoid)
+      // Base teardrop (ellipsoid) - smaller scale to be more reasonable
       const teardropBase = document.createElement('a-entity');
-      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 1.5; segment-width: 32');
-      teardropBase.setAttribute('material', 'color: #667eea; opacity: 0.9');
+      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 0.8; segment-width: 32');
+      teardropBase.setAttribute('material', 'color: #667eea; opacity: 0.95');
       teardropBase.setAttribute('scale', '1 2 1'); // Stretch vertically to make teardrop shape
       
-      // White border (slightly larger, inverted sphere)
+      // White border (slightly larger)
       const border = document.createElement('a-entity');
-      border.setAttribute('geometry', 'primitive: sphere; radius: 1.58; segment-width: 32');
+      border.setAttribute('geometry', 'primitive: sphere; radius: 0.85; segment-width: 32');
       border.setAttribute('material', 'color: #ffffff; side: back');
       border.setAttribute('scale', '1 2 1');
       
       // Top pointed tip (cone pointing up)
       const tip = document.createElement('a-entity');
-      tip.setAttribute('geometry', 'primitive: cone; radius: 0.4; height: 1.5; segments: 8');
+      tip.setAttribute('geometry', 'primitive: cone; radius: 0.3; height: 1; segments: 8');
       tip.setAttribute('material', 'color: #667eea');
-      tip.setAttribute('position', '0 2.25 0'); // Positioned at top of teardrop
+      tip.setAttribute('position', '0 2 0'); // Positioned at top of teardrop
       
-      // Text label - use larger scale and brighter color
-      const textEntity = document.createElement('a-text');
-      textEntity.setAttribute('value', name);
-      textEntity.setAttribute('color', '#333333');
-      textEntity.setAttribute('align', 'center');
-      textEntity.setAttribute('width', '8');
-      textEntity.setAttribute('position', '0 4.5 0');
-      textEntity.setAttribute('scale', '1.5 1.5 1.5');
-      
-      markerGroup.appendChild(teardropBase);
-      markerGroup.appendChild(border);
-      markerGroup.appendChild(tip);
-      entity.appendChild(markerGroup);
-      entity.appendChild(textEntity);
+      entity.appendChild(teardropBase);
+      entity.appendChild(border);
+      entity.appendChild(tip);
       
       // Add to LocAR which will position it at GPS coordinates
       currentLocAR.add(entity.object3D, lng, lat);
       
       document.getElementById('poi-container').appendChild(entity);
-
+      
       return entity;
     }
 
