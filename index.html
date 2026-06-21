@@ -436,34 +436,41 @@
       // Create a single A-Frame entity for LocAR positioning
       const entity = document.createElement('a-entity');
       
-      // Base teardrop (ellipsoid) - much smaller scale for better visibility at distance
+      // Base teardrop (ellipsoid) - medium scale
       const teardropBase = document.createElement('a-entity');
-      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 0.3; segment-width: 16');
+      teardropBase.setAttribute('geometry', 'primitive: sphere; radius: 0.5; segment-width: 24');
       teardropBase.setAttribute('material', 'color: #667eea; opacity: 0.95');
       teardropBase.setAttribute('scale', '1 2 1'); // Stretch vertically to make teardrop shape
       
       // White border (slightly larger)
       const border = document.createElement('a-entity');
-      border.setAttribute('geometry', 'primitive: sphere; radius: 0.32; segment-width: 16');
+      border.setAttribute('geometry', 'primitive: sphere; radius: 0.53; segment-width: 24');
       border.setAttribute('material', 'color: #ffffff; side: back');
       border.setAttribute('scale', '1 2 1');
       
       // Top pointed tip (cone pointing up)
       const tip = document.createElement('a-entity');
-      tip.setAttribute('geometry', 'primitive: cone; radius: 0.15; height: 0.5; segments: 8');
+      tip.setAttribute('geometry', 'primitive: cone; radius: 0.25; height: 0.8; segments: 8');
       tip.setAttribute('material', 'color: #667eea');
-      tip.setAttribute('position', '0 1.2 0'); // Positioned at top of teardrop
+      tip.setAttribute('position', '0 1.6 0'); // Positioned at top of teardrop
       
       entity.appendChild(teardropBase);
       entity.appendChild(border);
       entity.appendChild(tip);
       
+      // Add text label - positioned above the marker
+      const textEntity = document.createElement('a-text');
+      textEntity.setAttribute('value', name);
+      textEntity.setAttribute('color', '#000000');
+      textEntity.setAttribute('align', 'center');
+      textEntity.setAttribute('width', '3');
+      textEntity.setAttribute('position', '0 2.5 0');
+      entity.appendChild(textEntity);
+      
       // Add to LocAR which will position it at GPS coordinates
       currentLocAR.add(entity.object3D, lng, lat);
       
       document.getElementById('poi-container').appendChild(entity);
-      
-      console.log(`Marker ${name} added at (${lng}, ${lat})`);
       
       return entity;
     }
