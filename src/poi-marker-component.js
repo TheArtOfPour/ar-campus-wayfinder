@@ -1,6 +1,8 @@
 // Custom A-Frame component for POI markers with billboarded text labels
 // Usage: <a-entity poi-marker="lat: 48.711; lng: -122.49; name: 'Building Name'"></a-entity>
 
+import 'locar-aframe';
+
 AFRAME.registerComponent('poi-marker', {
   schema: {
     lat: { type: 'number', default: 0 },
@@ -12,7 +14,7 @@ AFRAME.registerComponent('poi-marker', {
 
   init() {
     // Create the marker container that LocAR will position
-    this.entity.setAttribute('locar-entity-place', {
+    this.el.setAttribute('locar-entity-place', {
       latitude: this.data.lat,
       longitude: this.data.lng
     });

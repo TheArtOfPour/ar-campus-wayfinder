@@ -213,7 +213,10 @@
     </a-assets>
 
     <a-entity id="cameraRig" position="0 0 0">
-      <a-camera gps-camera rotation-reader></a-camera>
+      <!-- locar-camera for GPS positioning -->
+      <a-entity locar-camera></a-entity>
+      <!-- Standard A-Frame camera for rendering -->
+      <a-camera rotation-reader></a-camera>
       
       <!-- Reticle entity -->
       <a-entity reticle id="reticle"
@@ -284,7 +287,6 @@
   <!-- Custom POI marker component -->
   <script type="module" src="./src/poi-marker-component.js"></script>
 
-  <!-- Main application script -->
   <!-- Main application script -->
   <script type="module">
     import { initARApp } from './src/main.js';
