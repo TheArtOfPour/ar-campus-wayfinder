@@ -98,28 +98,37 @@ async function initGPS() {
       }
     };
 
-    currentLocAR.on('gpsupdate', (data) => {
+    // Listen for first GPS update to initialize panel
+    const onFirstGPSUpdate = (data) => {
+      currentLocAR.off('gpsupdate', onFirstGPSUpdate);
+      
       // Update compass needle
       if (data.heading !== null && !isNaN(data.heading)) {
         const needle = document.getElementById('compass-needle');
         if (needle) {
           needle.style.transform = `translate(-50%, -50%) rotate(${360 - data.heading}deg)`;
         }
-        
-        // Update debug panel with heading
-        updateDebugGPS(data);
       }
       
-      // Also update distances periodically when GPS updates
-      updateDistances();
-    });
-
-    // Initial debug panel update after GPS starts
-    setTimeout(() => {
-      if (currentLocAR && currentLocAR.gps) {
-        updateDebugGPS(currentLocAR.gps);
+      // Update debug panel with real GPS data
+      updateDebugGPS(data);
+    };
+    
+    currentLocAR.on('gpsupdate', onFirstGPSUpdate);
+    
+    // Also handle subsequent updates
+    const onSubsequentGPSUpdate = (data) => {
+      if (data.heading !== null && !isNaN(data.heading)) {
+        const needle = document.getElementById('compass-needle');
+        if (needle) {
+          needle.style.transform = `translate(-50%, -50%) rotate(${360 - data.heading}deg)`;
+        }
       }
-    }, 500);
+      
+      updateDistances();
+    };
+    
+    currentLocAR.on('gpsupdate', onSubsequentGPSUpdate);
 
     return app;
   } catch (error) {
