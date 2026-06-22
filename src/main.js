@@ -35,6 +35,13 @@ function updateDistances() {
   if (!currentLocAR || locations.length === 0) return;
 
   const gpsData = currentLocAR.gps;
+  
+  // Debug: log GPS state before checking
+  console.log(`[updateDistances] GPS data available: ${!!gpsData}`);
+  if (gpsData) {
+    console.log(`[updateDistances] Lat: ${gpsData.latitude}, Lng: ${gpsData.longitude}, Alt: ${gpsData.altitude}`);
+  }
+  
   if (!gpsData || !gpsData.latitude || !gpsData.longitude) return;
 
   // Find entities with poi-marker component and update their distance display
@@ -65,20 +72,27 @@ function updateDistances() {
 setInterval(updateDistances, 5000);
 
 async function initGPS() {
+  console.log('[initGPS] Starting GPS initialization...');
+  
   const app = new App({
     cameraOptions: { hFov: 80, near: 0.1, far: 1000 }
   });
 
   try {
+    console.log('[initGPS] Calling app.start()...');
     currentLocAR = await app.start();
+    console.log('[initGPS] app.start() completed');
     
     // Establish world origin with fake GPS
     if (locations.length > 0) {
       const [firstLocation] = locations;
+      console.log(`[initGPS] Setting fake GPS to: ${firstLocation.lng}, ${firstLocation.lat}`);
       currentLocAR.fakeGps(firstLocation.lng, firstLocation.lat, 0, 10);
     }
     
+    console.log('[initGPS] Starting GPS...');
     await currentLocAR.startGps();
+    console.log('[initGPS] startGps() completed');
 
     // Update debug panel with GPS data when available
     const updateDebugGPS = (data) => {
