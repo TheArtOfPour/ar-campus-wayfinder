@@ -1,50 +1,50 @@
 [
   {
-    "id": "R",
-    "name": "Revels",
-    "lat": 48.711359,
-    "lng": -122.489252,
-    "description": "R",
+    "id": "building-a",
+    "name": "HC",
+    "lat": 48.76493902606986,
+    "lng": -122.5102771303933,
+    "description": "Haskell Center",
     "icon": null
   },
   {
-    "id": "S",
-    "name": "S & S",
-    "lat": 48.711321,
-    "lng": -122.488509,
-    "description": "S",
+    "id": "building-b",
+    "name": "CS",
+    "lat": 48.76517874251886,
+    "lng": -122.5090488989137,
+    "description": "College Services",
     "icon": null
   },
   {
-    "id": "M",
-    "name": "M & M",
-    "lat": 48.711314,
-    "lng": -122.487736,
-    "description": "M",
+    "id": "building-c",
+    "name": "CC",
+    "lat": 48.76562014758625,
+    "lng": -122.51045768889969,
+    "description": "Campus Center",
     "icon": null
   },
   {
-    "id": "H",
-    "name": "HaL",
-    "lat": 48.711420,
-    "lng": -122.490614,
-    "description": "HL",
+    "id": "field",
+    "name": "MC",
+    "lat": 48.766928218600846,
+    "lng": -122.50853234258545,
+    "description": "",
     "icon": null
   },
   {
-    "id": "RR",
-    "name": "Roger",
-    "lat": 48.713675,
-    "lng": -122.489330,
-    "description": "RRoger",
+    "id": "auditorium",
+    "name": "DMC",
+    "lat": 48.765794902908155,
+    "lng": -122.50860865204304,
+    "description": "",
     "icon": null
   },
   {
-    "id": "PT",
-    "name": "Poet Tree",
-    "lat": 48.710861,
-    "lng": -122.488917,
-    "description": "PT",
+    "id": "engineering",
+    "name": "A",
+    "lat": 48.765686889960215,
+    "lng": -122.51286437179239,
+    "description": "",
     "icon": null
   }
 ]
