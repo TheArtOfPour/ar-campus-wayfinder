@@ -324,6 +324,23 @@
         });
       }
     });
+
+    // Redirect console.log to visible debug panel on mobile
+    const debugLogEl = document.getElementById('debug-log');
+    if (debugLogEl) {
+      const originalLog = console.log;
+      console.log = function(...args) {
+        originalLog.apply(console, args);
+        
+        const msg = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+        debugLogEl.textContent += '\n> ' + msg;
+        // Keep only last 5 lines
+        const lines = debugLogEl.textContent.split('\n');
+        if (lines.length > 7) {
+          debugLogEl.textContent = lines.slice(-6).join('\n');
+        }
+      };
+    }
   </script>
 
   <!-- Debug panel for marker information -->
@@ -331,7 +348,8 @@
     <strong>Debug Info</strong><br>
     <span id="debug-gps">GPS: --</span><br>
     <span id="debug-markers">Markers created: 0</span><br>
-    <span id="debug-cam">Camera: ready</span>
+    <span id="debug-cam">Camera: ready</span><br>
+    <div id="debug-log" style="margin-top:8px;font-size:11px;"></div>
   </div>
 </body>
 </html>
