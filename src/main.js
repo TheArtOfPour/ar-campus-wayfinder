@@ -100,7 +100,10 @@ function createPOIs() {
   const container = document.getElementById('poi-container');
   
   if (!currentLocAR || !THREE) return;
+  
+  console.log('[createPOIs] Starting marker creation for', locations.length, 'locations');
 
+  let markersCreated = 0;
   for (const loc of locations) {
     // Create A-Frame entity with poi-marker component
     const markerEl = document.createElement('a-entity');
@@ -108,6 +111,7 @@ function createPOIs() {
     // Set attributes on the A-Frame element
     markerEl.setAttribute('poi-marker', `lat: ${loc.lat}; lng: ${loc.lng}; name: "${loc.name}"`);
     markerEl.setAttribute('data-location-id', loc.id);
+    markerEl.setAttribute('visible', 'true'); // Explicitly visible
     
     container.appendChild(markerEl);
     
@@ -115,9 +119,32 @@ function createPOIs() {
       el: markerEl,
       location: loc
     };
+    
+    markersCreated++;
+    console.log('[createPOIs] Created marker:', loc.name, 'at', loc.lat, ',', loc.lng);
   }
 
-  console.log(`Created ${locations.length} POI entities using A-Frame components`);
+  updateDebugPanel(markersCreated);
+  console.log(`[createPOIs] Total markers created: ${markersCreated}`);
+}
+
+// Update debug panel with GPS and marker info
+function updateDebugPanel(markersCreated = null) {
+  const debugGps = document.getElementById('debug-gps');
+  const debugMarkers = document.getElementById('debug-markers');
+  
+  if (currentLocAR && currentLocAR.gps) {
+    const gps = currentLocAR.gps;
+    if (debugGps) {
+      debugGps.textContent = `GPS: ${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)} (${gps.altitude?.toFixed(1) || 0}m)`;
+    }
+  } else if (debugGps) {
+    debugGps.textContent = 'GPS: waiting...';
+  }
+  
+  if (debugMarkers) {
+    debugMarkers.textContent = `Markers created: ${markersCreated ?? Object.keys(poiEntities).length}`;
+  }
 }
 
 function getHoveredPOI() {
@@ -379,6 +406,10 @@ async function init() {
     }
 
     await initGPS();
+    
+    // Update debug panel after GPS is ready
+    updateDebugPanel();
+    
     createPOIs();
     setupSearch();
     updateDistances();
