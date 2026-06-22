@@ -80,14 +80,46 @@ async function initGPS() {
     
     await currentLocAR.startGps();
 
+    // Update debug panel with GPS data when available
+    const updateDebugGPS = (data) => {
+      if (!currentLocAR || !currentLocAR.gps) return;
+      
+      const gps = currentLocAR.gps;
+      const debugGps = document.getElementById('debug-gps');
+      if (debugGps) {
+        let gpsText = `GPS: ${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}`;
+        if (gps.altitude !== undefined && !isNaN(gps.altitude)) {
+          gpsText += ` (${gps.altitude.toFixed(1)}m)`;
+        }
+        if (data && data.heading !== null && !isNaN(data.heading)) {
+          gpsText += ` | Heading: ${Math.round(data.heading)}°`;
+        }
+        debugGps.textContent = gpsText;
+      }
+    };
+
     currentLocAR.on('gpsupdate', (data) => {
+      // Update compass needle
       if (data.heading !== null && !isNaN(data.heading)) {
         const needle = document.getElementById('compass-needle');
         if (needle) {
           needle.style.transform = `translate(-50%, -50%) rotate(${360 - data.heading}deg)`;
         }
+        
+        // Update debug panel with heading
+        updateDebugGPS(data);
       }
+      
+      // Also update distances periodically when GPS updates
+      updateDistances();
     });
+
+    // Initial debug panel update after GPS starts
+    setTimeout(() => {
+      if (currentLocAR && currentLocAR.gps) {
+        updateDebugGPS(currentLocAR.gps);
+      }
+    }, 500);
 
     return app;
   } catch (error) {
