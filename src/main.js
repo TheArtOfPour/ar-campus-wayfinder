@@ -1,7 +1,8 @@
-// AR Campus Wayfinder v2 - Main Application Logic
+// AR Campus Wayfinder v2 - Main Application Logic (A-Frame Version)
 // This file is loaded via import in index.html
 
 import { App } from 'locar';
+import 'locar-aframe';
 
 const THREE = window.THREE;
 const LOCATIONS_URL = './locations.json';
@@ -25,86 +26,37 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 function formatDistance(km) {
   if (km < 0.5) return `${Math.round(km * 1000)} m`;
-  if (km < 10) return `${(km * 10).toFixed(1) / 10} km`;
+  if (km < 10) return `${(Math.round(km * 10) / 10).toFixed(1)} km`;
   return `${km.toFixed(1)} km`;
 }
 
-// Create teardrop marker geometry
-function createTeardropGeometry(color = '#667eea', customIconUrl = null) {
-  const group = new THREE.Group();
-
-  if (customIconUrl) {
-    const texture = new THREE.TextureLoader().load(customIconUrl);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(1.5, 2, 1);
-    group.add(sprite);
-  } else {
-    // Create teardrop using path
-    const path = new THREE.Shape();
-    path.moveTo(0, -1);
-    path.bezierCurveTo(-1.2, -1, -1.5, 0.8, 0, 2);
-    path.bezierCurveTo(1.5, 0.8, 1.2, -1, 0, -1);
-
-    const extrudeSettings = {
-      steps: 2,
-      depth: 0.2,
-      bevelEnabled: true,
-      bevelThickness: 0.1,
-      bevelSize: 0.3,
-      bevelSegments: 4
-    };
-
-    const geometry = new THREE.ExtrudeGeometry(path, extrudeSettings);
-    geometry.center();
-
-    const material = new THREE.MeshStandardMaterial({ 
-      color: color,
-      roughness: 0.3,
-      metalness: 0.1
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
-    group.add(mesh);
-
-    // White border for visibility
-    const borderMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xffffff,
-      side: THREE.BackSide
-    });
-    const borderMesh = new THREE.Mesh(geometry.clone(), borderMaterial);
-    borderMesh.scale.set(1.05, 1.05, 1.05);
-    group.add(borderMesh);
-
-    // Arrow indicator on top
-    const arrowGeo = new THREE.ConeGeometry(0.2, 0.4, 8);
-    arrowGeo.rotateX(Math.PI / 2);
-    const arrowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-    arrow.position.y = 1;
-    group.add(arrow);
-  }
-
-  return group;
-}
-
+// Update distances for all POIs
 function updateDistances() {
   if (!currentLocAR || locations.length === 0) return;
 
   const gpsData = currentLocAR.gps;
   if (!gpsData || !gpsData.latitude || !gpsData.longitude) return;
 
-  Object.keys(poiEntities).forEach(id => {
-    const poiEntity = poiEntities[id];
-    if (poiEntity && poiEntity.location) {
-      const loc = poiEntity.location;
-      const distance = calculateDistance(
-        gpsData.latitude, gpsData.longitude,
-        loc.lat, loc.lng
-      );
-      
-      if (poiEntity.distanceTextEntity) {
-        poiEntity.distanceTextEntity.setAttribute('text', 'value', formatDistance(distance));
+  // Find entities with poi-marker component and update their distance display
+  document.querySelectorAll('[poi-marker]').forEach(el => {
+    const entityEl = el;
+    const locationId = entityEl.getAttribute('data-location-id');
+    
+    if (locationId) {
+      const loc = locations.find(l => l.id === locationId);
+      if (loc) {
+        const dist = calculateDistance(
+          gpsData.latitude, gpsData.longitude,
+          loc.lat, loc.lng
+        );
+        
+        // Find the distance text entity within this marker's children
+        entityEl.querySelectorAll('[text]').forEach(textEl => {
+          if (textEl.getAttribute('value') && !textEl.hasAttribute('billboard-text')) {
+            // This is a distance display (not name), update it
+            textEl.setAttribute('text', 'value', formatDistance(dist));
+          }
+        });
       }
     }
   });
@@ -150,37 +102,22 @@ function createPOIs() {
   if (!currentLocAR || !THREE) return;
 
   for (const loc of locations) {
-    // Create POI marker - locar.add() will add it to the scene automatically
-    const markerGroup = createTeardropMarker(loc.lat, loc.lng, loc.name, loc.description, loc.icon);
-
-    poiEntities[loc.id] = markerGroup;
-    markerGroup.location = loc;
-
-    // Distance text entity (added as child of marker group)
-    const distanceTextEntity = document.createElement('a-text');
-    distanceTextEntity.setAttribute('position', '0 -2 0');
-    distanceTextEntity.setAttribute('color', '#ffffff');
-    distanceTextEntity.setAttribute('align', 'center');
-    distanceTextEntity.setAttribute('width', '4');
-    markerGroup.appendChild(distanceTextEntity);
-
-    poiEntities[loc.id].distanceTextEntity = distanceTextEntity;
+    // Create A-Frame entity with poi-marker component
+    const markerEl = document.createElement('a-entity');
+    
+    // Set attributes on the A-Frame element
+    markerEl.setAttribute('poi-marker', `lat: ${loc.lat}; lng: ${loc.lng}; name: "${loc.name}"`);
+    markerEl.setAttribute('data-location-id', loc.id);
+    
+    container.appendChild(markerEl);
+    
+    poiEntities[loc.id] = {
+      el: markerEl,
+      location: loc
+    };
   }
 
-  console.log(`Created ${locations.length} POI entities`);
-}
-
-function createTeardropMarker(lat, lng, name, description, customIconUrl) {
-  const group = new THREE.Group();
-  
-  // Create the marker geometry first
-  const markerGeometry = createTeardropGeometry('#667eea', customIconUrl);
-  group.add(markerGeometry);
-
-  // Add to LocAR which will position it at GPS coordinates
-  currentLocAR.add(group, lng, lat);
-
-  return group;
+  console.log(`Created ${locations.length} POI entities using A-Frame components`);
 }
 
 function getHoveredPOI() {
@@ -189,21 +126,28 @@ function getHoveredPOI() {
   
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   
-  const pois = Object.values(poiEntities).filter(p => p && p.visible !== false);
+  const pois = Object.values(poiEntities).filter(p => p && p.el && p.el.visible !== false);
   if (pois.length === 0) return null;
-
+  
+  // Get all marker meshes
   const intersectedMeshes = [];
   pois.forEach(p => {
-    p.traverse(child => { if (child.isMesh) intersectedMeshes.push(child); });
+    if (p.el.object3DMap) {
+      Object.values(p.el.object3DMap).forEach(obj => {
+        obj.traverse(child => { if (child.isMesh) intersectedMeshes.push(child); });
+      });
+    }
   });
-
+  
   const intersects = raycaster.intersectObjects(intersectedMeshes);
-
   if (intersects.length > 0 && intersects[0].distance < 8) {
     for (const poi of pois) {
-      if (poi === intersects[0].object || 
-          poi.children.includes(intersects[0].object)) {
-        return poi;
+      if (poi.el.object3DMap) {
+        const markerObj = Object.values(poi.el.object3DMap)[0];
+        if (markerObj === intersects[0].object || 
+            markerObj.children.includes(intersects[0].object)) {
+          return poi;
+        }
       }
     }
   }
@@ -213,33 +157,48 @@ function getHoveredPOI() {
 
 function updateArrowIndicator() {
   const camera = document.getElementById('cameraRig').object3D;
-  const cameraRotationY = camera.rotation.y;
-
+  
   if (filteredLocationId && poiEntities[filteredLocationId]) {
     const targetPOI = poiEntities[filteredLocationId];
-    const targetPos = new THREE.Vector3();
-    targetPOI.getWorldPosition(targetPos);
+    if (!targetPOI.location) return;
 
-    const cameraPos = new THREE.Vector3();
-    camera.getWorldPosition(cameraPos);
+    // Calculate bearing from current GPS position to target POI
+    const gpsData = currentLocAR.gps;
+    if (!gpsData || !gpsData.latitude || !gpsData.longitude) return;
 
-    const dx = targetPos.x - cameraPos.x;
-    const dz = targetPos.z - cameraPos.z;
-    let angle = Math.atan2(dx, dz);
+    const loc = targetPOI.location;
     
-    let arrowRotation = (angle * 180 / Math.PI) - (cameraRotationY * 180 / Math.PI);
-    arrowRotation = ((arrowRotation % 360) + 360) % 360;
+    // Calculate bearing using haversine formula
+    const dLat = (loc.lat - gpsData.latitude) * Math.PI / 180;
+    const dLon = (loc.lng - gpsData.longitude) * Math.PI / 180;
+    const lat1 = gpsData.latitude * Math.PI / 180;
+    const lat2 = loc.lat * Math.PI / 180;
+    
+    let bearing = Math.atan2(
+      Math.sin(dLon) * Math.cos(lat2),
+      Math.cos(lat1) * Math.sin(lat2) - 
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+    ) * 180 / Math.PI;
+
+    // Convert to compass bearing (0-360 degrees)
+    bearing = (bearing + 360) % 360;
+
+    // Get camera's yaw rotation
+    const yaw = (camera.rotation.y * 180 / Math.PI + 360) % 360;
+    
+    // Arrow should point toward the target relative to where camera is facing
+    let arrowRotation = bearing - yaw;
+    if (arrowRotation < -180) arrowRotation += 360;
+    else if (arrowRotation > 180) arrowRotation -= 360;
 
     const arrowEl = document.getElementById('arrow-indicator');
-    arrowEl.setAttribute('rotation', `0 ${arrowRotation} 0`);
-    
-    const dist = calculateDistance(
-      currentLocAR.gps.latitude,
-      currentLocAR.gps.longitude,
-      poiEntities[filteredLocationId].location.lat,
-      poiEntities[filteredLocationId].location.lng
-    );
+    arrowEl.setAttribute('rotation', `0 ${-arrowRotation} 0`);
+    arrowEl.setAttribute('visible', 'true');
 
+    // Calculate distance to determine when to show/hide
+    const dist = calculateDistance(gpsData.latitude, gpsData.longitude, loc.lat, loc.lng);
+
+    // Hide if close enough to the target (within ~2 meters)
     arrowEl.setAttribute('visible', dist > 1.5);
   } else {
     document.getElementById('arrow-indicator').setAttribute('visible', 'false');
@@ -306,7 +265,9 @@ function setupSearch() {
       resultsContainer.classList.remove('open');
       
       Object.keys(poiEntities).forEach(id => {
-        if (poiEntities[id]) poiEntities[id].visible = true;
+        if (poiEntities[id] && poiEntities[id].el) {
+          poiEntities[id].el.setAttribute('visible', 'true');
+        }
       });
       return;
     }
@@ -350,12 +311,20 @@ function selectLocation(id) {
   filteredLocationId = id;
   
   Object.keys(poiEntities).forEach(key => {
-    const poig = poiEntities[key];
-    if (poig && poig.children) {
-      poig.visible = (key === id);
-      poig.children.forEach(child => {
-        child.visible = (key === id);
-      });
+    const poiEntry = poiEntities[key];
+    if (poiEntry && poiEntry.el) {
+      // Use A-Frame's setAttribute for visibility
+      const visibleState = (key === id);
+      poiEntry.el.setAttribute('visible', visibleState.toString());
+      
+      // Also set children visibility recursively
+      if (poiEntry.el.object3DMap) {
+        Object.values(poiEntry.el.object3DMap).forEach(obj => {
+          obj.traverse(child => {
+            child.visible = visibleState;
+          });
+        });
+      }
     }
   });
 
@@ -414,7 +383,7 @@ async function init() {
     setupSearch();
     updateDistances();
 
-    console.log('AR Wayfinder v2 initialized successfully');
+    console.log('AR Wayfinder v2 (A-Frame) initialized successfully');
 
   } catch (error) {
     console.error('Initialization error:', error);
@@ -422,5 +391,6 @@ async function init() {
   }
 }
 
-// Expose for global use
+// Expose for global use and ES modules
 window.initARApp = init;
+export { init as initARApp };
