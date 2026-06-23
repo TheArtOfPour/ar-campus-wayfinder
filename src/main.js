@@ -40,9 +40,9 @@ function createPOIs() {
     const box = document.createElement('a-box');
     box.setAttribute('material', {
       color: colors[i % colors.length],
-      opacity: 0.9
+      opacity: 0.75
     });
-    box.setAttribute('scale', '3 6 3'); // Smaller, visible boxes
+    box.setAttribute('scale', '3 4 3'); // Smaller, visible boxes
     
     entity.appendChild(box);
     
@@ -52,6 +52,7 @@ function createPOIs() {
     text.setAttribute('color', '#000');
     text.setAttribute('width', 4);
     text.setAttribute('position', '0 3.5 0');
+    text.setAttribute('scale', '3 4 3'); 
     entity.appendChild(text);
     
     scene.appendChild(entity);
@@ -59,17 +60,12 @@ function createPOIs() {
     poiEntities[loc.id] = {
       el: entity,
       location: loc
-    };
-    
-    console.log(`[createPOIs] Created marker for ${loc.name} at ${loc.lat}, ${loc.lng}`);
+    };    
   }
-
-  console.log('[createPOIs] Done creating POI markers');
 }
 
 // GPS update handler - called when locar-camera gets GPS data
 function onGPSUpdate(e) {
-  console.log('[gpsupdate] Event received');
   
   const lat = e.detail.position.coords.latitude;
   const lng = e.detail.position.coords.longitude;
@@ -78,8 +74,6 @@ function onGPSUpdate(e) {
   if (lat === 0 && lng === 0) {
     return;
   }
-
-  console.log(`[GPS] Got location: lat ${lat}, lng ${lng}`);
 
   if (firstLocation) {
     firstLocation = false;
