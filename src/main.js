@@ -47,7 +47,7 @@ function createPOIs() {
     
     entity.appendChild(box);
     
-    // Add name text above the marker - use Y-axis rotation for facing camera
+    // Add name text above the marker - A-Frame text defaults to facing negative Z (up)
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
@@ -55,7 +55,6 @@ function createPOIs() {
     text.setAttribute('baseline', 'middle');
     text.setAttribute('position', '0 1.8 0'); // Position above box
     text.setAttribute('scale', '2 2 2');
-    text.setAttribute('rotation', '0 180 0'); // Rotate Y to face camera (keeps text upright)
     entity.appendChild(text);
     
     scene.appendChild(entity);
