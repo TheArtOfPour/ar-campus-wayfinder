@@ -42,7 +42,8 @@ function createPOIs() {
       color: colors[i % colors.length],
       opacity: 0.75
     });
-    box.setAttribute('scale', '3 4 3'); // Smaller, visible boxes
+    box.setAttribute('position', '0 1 0');
+    box.setAttribute('scale', '3 3 3'); // Smaller, visible boxes
     
     entity.appendChild(box);
     
@@ -50,9 +51,9 @@ function createPOIs() {
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
-    text.setAttribute('width', 4);
-    text.setAttribute('position', '0 3.5 0');
-    text.setAttribute('scale', '3 4 3'); 
+    // text.setAttribute('width', 4);
+    text.setAttribute('position', '0 2 0');
+    text.setAttribute('scale', '6 6 6'); 
     // Billboard effect: text always faces camera
     text.setAttribute('look-at', '[locar-camera]');
     entity.appendChild(text);
