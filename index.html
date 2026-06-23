@@ -6,7 +6,7 @@
   <title>AR Campus Wayfinder v2</title>
   
   <!-- A-Frame with AR.js -->
-  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
   <!-- LocAR-AFrame for GPS positioning -->
@@ -15,7 +15,7 @@
   </script>
 
   <!-- A-Frame Look At Component for billboard text effect -->
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-look-at-component@v3.0.2/dist/aframe-look-at-component.min.js"></script>
+  <script src="scripts/aframe-look-at-component.min.js"></script>
   
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -113,14 +113,5 @@
       }
     });
   </script>
-
-  <!-- Debug panel for marker information -->
-  <div id="debug-panel">
-    <strong>Debug Info</strong><br>
-    <span id="debug-gps">GPS: --</span><br>
-    <span id="debug-markers">Markers created: 0</span><br>
-    <span id="debug-cam">Camera: ready</span><br>
-    <div id="debug-log" class="debug-log"></div>
-  </div>
 </body>
 </html>
