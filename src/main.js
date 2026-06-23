@@ -51,9 +51,11 @@ function createPOIs() {
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
+    text.setAttribute('anchor', 'center');
+    text.setAttribute('baseline', 'bottom');
     // text.setAttribute('width', 4);
-    text.setAttribute('position', '0 2 0');
-    text.setAttribute('scale', '10 10 10'); 
+    text.setAttribute('position', '0 3 0');
+    text.setAttribute('scale', '12 12 12'); 
     // Billboard effect: text always faces camera
     text.setAttribute('look-at', '[locar-camera]');
     entity.appendChild(text);
