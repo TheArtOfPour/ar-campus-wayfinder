@@ -1,5 +1,6 @@
 // AR Campus Wayfinder v2 - Main Application Logic (Simplified A-Frame Version)
 // Uses direct locar-camera gpsupdate events as per locar-aframe examples
+// Supports mock GPS for desktop debugging via window.mockGPSLocation
 
 import 'locar-aframe';
 
@@ -120,6 +121,56 @@ function onGPSUpdate(e) {
   }
 }
 
+// Mock GPS handler for desktop testing - injects fake GPS updates periodically
+function setupMockGPS() {
+  const mockLocation = window.mockGPSLocation;
+  if (!mockLocation) return;
+
+  console.log('[Mock GPS] Setting up mock location:', mockLocation);
+
+  // Emit a single gpsupdate event with the mock location
+  const event = new CustomEvent('gpsupdate', {
+    detail: {
+      position: {
+        coords: {
+          latitude: mockLocation.lat,
+          longitude: mockLocation.lng,
+          accuracy: 10
+        }
+      }
+    }
+  });
+
+  locarCamera.dispatchEvent(event);
+
+  // Also emit periodic updates to simulate GPS jitter and smoothing
+  setInterval(() => {
+    const lat = mockLocation.lat + (Math.random() - 0.5) * 0.00001;
+    const lng = mockLocation.lng + (Math.random() - 0.5) * 0.00001;
+
+    const event = new CustomEvent('gpsupdate', {
+      detail: {
+        position: {
+          coords: {
+            latitude: lat,
+            longitude: lng,
+            accuracy: 10
+          }
+        }
+      }
+    });
+
+    locarCamera.dispatchEvent(event);
+  }, 1000);
+
+  // Mark as first location so POIs get created
+  if (firstLocation) {
+    firstLocation = false;
+    if (loadingEl) loadingEl.style.display = 'none';
+    createPOIs();
+  }
+}
+
 async function updateVersionDisplay() {
   try {
     const response = await fetch('/version.json');
@@ -138,6 +189,11 @@ async function updateVersionDisplay() {
 async function init() {
   try {
     await updateVersionDisplay();
+
+    // Check for mock GPS before fetching locations
+    if (window.mockGPSLocation) {
+      console.log('[Mock GPS] Detected - will use mock location');
+    }
 
     const response = await fetch(LOCATIONS_URL);
     if (response.ok) {
@@ -158,10 +214,14 @@ async function init() {
       loadingEl.style.display = 'flex';
     }
 
-    // Listen for GPS updates directly on locar-camera
-    locarCamera.addEventListener('gpsupdate', onGPSUpdate);
-
-    console.log('[init] Listening for GPS updates...');
+    // Check for mock GPS first - if present, use it instead of real GPS
+    if (window.mockGPSLocation) {
+      setupMockGPS();
+    } else {
+      // Listen for real GPS updates on locar-camera
+      locarCamera.addEventListener('gpsupdate', onGPSUpdate);
+      console.log('[init] Listening for real GPS updates...');
+    }
 
   } catch (error) {
     console.error('[init] Initialization error:', error);

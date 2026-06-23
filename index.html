@@ -14,6 +14,12 @@
     import 'locar-aframe';
   </script>
 
+  <!-- A-Frame Debugger -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe-debugger@0.6.0/dist/aframe-debugger.min.js"></script>
+  
+  <!-- A-Frame Inspector -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe-inspector@1.3.2/dist/aframe-inspector.min.js"></script>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -27,6 +33,15 @@
     <button id="start-btn" class="start-btn">
       Start AR Experience
     </button>
+    
+    <!-- Desktop testing controls -->
+    <div class="desktop-controls">
+      <h3>Desktop Debug Mode</h3>
+      <label>
+        <input type="checkbox" id="mock-gps-toggle"> Mock GPS Location (48.7650, -122.5100)
+      </label>
+      <p class="debug-hint">Press <strong>I</strong> to open Inspector | <strong>Ctrl+Shift+I</strong> for DevTools</p>
+    </div>
   </div>
 
   <!-- Loading spinner -->
@@ -47,10 +62,10 @@
   <!-- A-Frame Scene -->
   <a-scene id="ar-scene" locar-webcam vr-mode-ui="enabled: false">
     <a-assets>      
-      <!-- <img id="teardrop-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150'%3E%3Cpath d='M50,10 C20,40 10,80 10,110 C10,140 50,150 50,150 C50,150 90,140 90,110 C90,80 80,40 50,10 Z' fill='%23667eea' stroke='white' stroke-width='3'/%3E%3Ccircle cx='50' cy='90' r='15' fill='rgba(255,255,255,0.8)'/%3E%3C/svg%3E"/> -->
+      <!-- <img id="teardrop-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150'%3E%3Cpath d='M50,10 C20,40 10,80 10,110 C10,140 50,150 50,150 C50,150 90,140 90,110 C90,80 80,40 50,10 Z' fill='%23667eea' stroke='white' stroke-width='3'/%3E%3Ccircle cx='50' cy='90' r='15' fill='rgba(255,255,255,0.8)'/%3E%3C/svg%3E" /> -->
       <img src="assets/map-marker.png" id="map-marker" />
     </a-assets>
-<a-camera look-controls='magicWindowTrackingEnabled: false' wasd-controls locar-camera></a-camera>
+  <a-camera look-controls='magicWindowTrackingEnabled: false' wasd-controls locar-camera></a-camera>
   </a-scene>
 
   <!-- UI Overlay -->
@@ -102,6 +117,7 @@
       const startBtn = document.getElementById('start-btn');
       const startOverlay = document.getElementById('start-overlay');
       const loading = document.getElementById('loading');
+      const mockGPSCheckbox = document.getElementById('mock-gps-toggle');
 
       if (startBtn) {
         startBtn.addEventListener('click', async () => {
@@ -109,6 +125,12 @@
           loading.style.display = 'flex';
 
           try {
+            // If mock GPS is enabled, inject mock data into window for the app to use
+            if (mockGPSCheckbox && mockGPSCheckbox.checked) {
+              console.log('[Mock GPS] Enabling mock location mode');
+              window.mockGPSLocation = { lat: 48.7650, lng: -122.5100 };
+            }
+            
             await initARApp();
           } catch (error) {
             console.error('Failed to initialize:', error);
@@ -116,6 +138,18 @@
 
           loading.style.display = 'none';
         });
+      }
+    });
+    
+    // Keyboard shortcuts for debugging
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'i' || e.key === 'I') {
+        const inspectorEl = document.querySelector('[inspector]');
+        if (inspectorEl && inspectorEl.components['inspector']) {
+          inspectorEl.components['inspector'].toggle();
+        } else {
+          console.log('Press Ctrl+Shift+I to open DevTools');
+        }
       }
     });
   </script>
