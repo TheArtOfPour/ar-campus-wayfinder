@@ -1,5 +1,5 @@
 // AR Campus Wayfinder v2 - Main Application Logic (Simplified A-Frame Version)
-// Uses locarCamera.addEventListener('gpsupdate') pattern from locar-aframe examples
+// Uses direct locar-camera gpsupdate events as per locar-aframe examples
 
 import 'locar-aframe';
 
@@ -17,66 +17,10 @@ const loadingEl = document.getElementById('loading');
 // Store POI entities
 const poiEntities = {};
 
-async function initGPS() {
-  console.log('[initGPS] Starting GPS initialization...');
-
-  try {
-    // Start the LocAR app
-    const App = (await import('locar')).App;
-    const app = new App({
-      cameraOptions: { hFov: 80, near: 0.1, far: 1000 }
-    });
-
-    await app.start();
-    console.log('[initGPS] LocAR app started');
-
-    // Don't fake GPS - just start the real GPS
-    await app.startGps();
-    console.log('[initGPS] GPS started');
-
-    // Show loading message while waiting for GPS signal
-    if (loadingEl) {
-      loadingEl.style.display = 'flex';
-    }
-
-    // Listen for GPS updates using addEventListener pattern
-    const onGPSUpdate = (e) => {
-      console.log('[gpsupdate] Event received');
-      
-      // Check if we have valid GPS data (not 0,0)
-      const lat = e.detail.position.coords.latitude;
-      const lng = e.detail.position.coords.longitude;
-
-      if (lat !== 0 && lng !== 0 && firstLocation) {
-        console.log(`[GPS] Got initial location: lat ${lat}, lng ${lng}`);
-        firstLocation = false;
-        
-        // Hide loading screen
-        if (loadingEl) {
-          loadingEl.style.display = 'none';
-        }
-        
-        // Remove listener to avoid duplicates
-        locarCamera.removeEventListener('gpsupdate', onGPSUpdate);
-        
-        // Create POI markers
-        createPOIs();
-      }
-    };
-
-    locarCamera.addEventListener('gpsupdate', onGPSUpdate);
-
-    return app;
-  } catch (error) {
-    console.error('[initGPS] Error:', error);
-    throw error;
-  }
-}
-
 function createPOIs() {
   console.log('[createPOIs] Creating POI markers...');
 
-  if (!locarCamera || !scene || locations.length === 0) {
+  if (!scene || locations.length === 0) {
     return;
   }
 
@@ -85,10 +29,8 @@ function createPOIs() {
   for (let i = 0; i < locations.length; i++) {
     const loc = locations[i];
     
-    // Create a box for each location
+    // Create an entity with locar-entity-place component
     const entity = document.createElement('a-entity');
-    
-    // Use composite component pattern with locar-entity-place
     entity.setAttribute('locar-entity-place', {
       latitude: loc.lat,
       longitude: loc.lng
@@ -125,6 +67,33 @@ function createPOIs() {
   console.log('[createPOIs] Done creating POI markers');
 }
 
+// GPS update handler - called when locar-camera gets GPS data
+function onGPSUpdate(e) {
+  console.log('[gpsupdate] Event received');
+  
+  const lat = e.detail.position.coords.latitude;
+  const lng = e.detail.position.coords.longitude;
+
+  // Ignore default 0,0 location
+  if (lat === 0 && lng === 0) {
+    return;
+  }
+
+  console.log(`[GPS] Got location: lat ${lat}, lng ${lng}`);
+
+  if (firstLocation) {
+    firstLocation = false;
+    
+    // Hide loading screen
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
+    
+    // Create POI markers when we get valid GPS
+    createPOIs();
+  }
+}
+
 async function updateVersionDisplay() {
   try {
     const response = await fetch('/version.json');
@@ -158,13 +127,19 @@ async function init() {
 
     console.log(`[init] Loaded ${locations.length} locations`);
 
-    await initGPS();
+    // Show loading while waiting for GPS
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+    }
 
-    console.log('[init] AR Wayfinder initialized successfully');
+    // Listen for GPS updates directly on locar-camera
+    locarCamera.addEventListener('gpsupdate', onGPSUpdate);
+
+    console.log('[init] Listening for GPS updates...');
+
   } catch (error) {
     console.error('[init] Initialization error:', error);
     
-    // Hide loading screen on error
     if (loadingEl) {
       loadingEl.style.display = 'none';
     }
