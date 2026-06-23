@@ -42,8 +42,8 @@ function createPOIs() {
       color: colors[i % colors.length],
       opacity: 0.75
     });
-    box.setAttribute('position', '0 1 0');
-    box.setAttribute('scale', '2 2 2'); // Smaller, visible boxes
+    box.setAttribute('position', '0 0.5 0'); // Adjust to center box at GPS point
+    box.setAttribute('scale', '2 1 2'); // Smaller, visible boxes (height 1 for ground alignment)
     
     entity.appendChild(box);
     
