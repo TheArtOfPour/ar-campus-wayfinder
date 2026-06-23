@@ -13,7 +13,7 @@
   <script type="module">
     import 'locar-aframe';
   </script>
-  
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -33,6 +33,15 @@
   <div id="loading" class="loading-overlay" style="display:none;">
     <div class="spinner"></div>
     <p class="loading-text">Initializing GPS and AR...</p>
+  </div>
+
+  <!-- Location selector dropdown -->
+  <div id="location-selector-container">
+    <label for="location-select">Location:</label>
+    <select id="location-select">
+      <option value="south">South Campus (Revels, S & S, etc.)</option>
+      <option value="btc">BTC (HC, CS, CC, etc.)</option>
+    </select>
   </div>
 
   <!-- A-Frame Scene -->
