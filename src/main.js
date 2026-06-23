@@ -52,10 +52,9 @@ function createPOIs() {
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
     text.setAttribute('anchor', 'center');
-    text.setAttribute('baseline', 'bottom');
-    // text.setAttribute('width', 4);
-    text.setAttribute('position', '0 3 0');
-    text.setAttribute('scale', '12 12 12'); 
+    text.setAttribute('baseline', 'middle'); // Changed from bottom to middle for better centering
+    text.setAttribute('position', '0 1.5 0'); // Position above the box (box is at 0.5, height 1 = top at 1.5)
+    text.setAttribute('scale', '3 3 3'); // Smaller scale for better visibility
     // Billboard effect: text always faces camera
     text.setAttribute('look-at', '[locar-camera]');
     entity.appendChild(text);
