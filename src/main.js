@@ -47,14 +47,15 @@ function createPOIs() {
     
     entity.appendChild(box);
     
-    // Add name text above the marker - simpler approach without look-at
+    // Add name text above the marker - use Y-axis rotation for facing camera
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
     text.setAttribute('anchor', 'center');
     text.setAttribute('baseline', 'middle');
     text.setAttribute('position', '0 1.8 0'); // Position above box
-    text.setAttribute('scale', '2 2 2'); // Smaller scale
+    text.setAttribute('scale', '2 2 2');
+    text.setAttribute('rotation', '0 180 0'); // Rotate Y to face camera (keeps text upright)
     entity.appendChild(text);
     
     scene.appendChild(entity);
