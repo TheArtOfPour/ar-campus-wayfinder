@@ -14,201 +14,17 @@
     import 'locar-aframe';
   </script>
   
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
-      background: #000;
-    }
-
-    #ar-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-
-    .reticle-container {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 40px; height: 40px;
-      z-index: 100; pointer-events: none;
-    }
-
-    .reticle {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 36px; height: 36px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 50%;
-    }
-    .reticle::before, .reticle::after {
-      content: ''; position: absolute; background: rgba(255, 255, 255, 0.8);
-    }
-    .reticle::before { top: 50%; left: -4px; width: 8px; height: 1px; }
-    .reticle::after { left: 50%; top: -4px; width: 1px; height: 8px; }
-
-    .arrow-indicator {
-      position: absolute; z-index: 100; pointer-events: none;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-    .arrow-outer { width: 60px; height: 60px; position: relative; }
-    .arrow-inner {
-      position: absolute; top: 50%; left: 50%;
-      width: 24px; height: 24px;
-      transform: translate(-50%, -50%) rotate(var(--rotation, 0deg));
-      transition: transform 0.3s ease-out;
-    }
-    .arrow-path {
-      position: absolute; left: 50%; top: 12px;
-      width: 2px; height: 48px;
-      background: linear-gradient(to bottom, #ff5722 0%, rgba(255, 87, 34, 0) 100%);
-      transform: translateX(-50%);
-    }
-    .arrow-head {
-      position: absolute; left: -10px; top: 0;
-      width: 0; height: 0;
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-top: 18px solid #ff5722;
-    }
-
-    .bottom-panel {
-      position: absolute; bottom: 20px; left: 50%;
-      transform: translateX(-50%);
-      width: 90%; max-width: 420px;
-      z-index: 100; pointer-events: auto;
-    }
-
-    .search-container { position: relative; margin-bottom: 12px; }
-    .search-input {
-      width: 100%; padding: 16px 24px;
-      border-radius: 50px; border: none;
-      background: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      font-size: 16px; outline: none;
-    }
-    .search-input::placeholder { color: #888; }
-
-    .search-results {
-      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-      background: rgba(255, 255, 255, 0.98);
-      border-radius: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-      max-height: 40vh; overflow-y: auto;
-    }
-    .search-item {
-      padding: 16px 20px; cursor: pointer;
-      transition: background 0.2s; border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    }
-    .search-item:last-child { border-bottom: none; }
-    .search-item:hover { background: #f5f5f5; }
-    .search-item strong { font-size: 16px; margin-bottom: 4px; }
-    .search-item span { font-size: 13px; color: #777; }
-
-    .location-card {
-      background: rgba(255, 255, 255, 0.98);
-      border-radius: 24px; padding: 20px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
-      transform: translateY(20px); opacity: 0;
-      transition: transform 0.4s ease-out, opacity 0.4s ease-out;
-    }
-    .location-card.visible { transform: translateY(0); opacity: 1; }
-    .location-card h3 { font-size: 20px; color: #333; margin-bottom: 8px; }
-    .location-details {
-      display: flex; align-items: center; gap: 15px;
-      margin-top: 12px; font-size: 14px; color: #666;
-    }
-    .location-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 18px; flex-shrink: 0;
-    }
-    .location-icon.custom { background-size: contain; background-repeat: no-repeat; background-position: center; }
-    .distance-badge {
-      background: #ff5722; color: white;
-      padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;
-    }
-
-    .compass-container {
-      position: absolute; bottom: 20px; right: 20px;
-      width: 64px; height: 64px; z-index: 100;
-    }
-    .compass-ring {
-      width: 100%; height: 100%;
-      border-radius: 50%; position: relative;
-      background: rgba(0, 0, 0, 0.3);
-      border: 2px solid rgba(255, 255, 255, 0.4);
-    }
-    .compass-needle {
-      position: absolute; top: 50%; left: 50%;
-      width: 4px; height: 32px;
-      background: linear-gradient(to bottom, #ff5722 50%, #fff 50%);
-      transform-origin: center center;
-    }
-    .compass-north {
-      position: absolute; top: 6px; left: 50%;
-      transform: translateX(-50%);
-      color: white; font-size: 11px; font-weight: bold;
-    }
-
-    .version-display {
-      position: absolute; bottom: 8px; right: 8px;
-      background: rgba(0, 0, 0, 0.6);
-      color: rgba(255, 255, 255, 0.7);
-      padding: 4px 10px; border-radius: 8px;
-      font-size: 11px; font-family: monospace; z-index: 95;
-    }
-
-    .loading-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: #000; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; color: white;
-      z-index: 999;
-    }
-    .spinner {
-      width: 50px; height: 50px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-radius: 50%; border-top-color: #fff;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 480px) {
-      .search-results { max-height: 35vh; }
-      .location-card { padding: 16px; }
-      .compass-container { bottom: 15px; right: 15px; width: 56px; height: 56px; }
-    }
-
-    #debug-panel {
-      position: absolute; top: 10px; left: 10px;
-      background: rgba(0, 0, 0, 0.7); color: #0f0;
-      font-family: monospace; font-size: 12px;
-      padding: 8px; border-radius: 4px; z-index: 95;
-      max-width: 300px; max-height: 180px; overflow-y: auto;
-    }
-    
-    #debug-panel .debug-line {
-      white-space: pre-wrap;
-      margin-bottom: 2px;
-    }
-
-    #start-overlay .spinner {
-      margin-bottom: 20px;
-      border-top-color: #667eea;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <!-- Start button overlay -->
   <div id="start-overlay" class="loading-overlay">
-    <h1 style="color:#667eea;margin-bottom:20px;">Campus Wayfinder v2</h1>
-    <p style="max-width:400px;text-align:center;color:#ddd;line-height:1.6;">
+    <h1 class="start-title">Campus Wayfinder v2</h1>
+    <p class="start-description">
       Augmented reality wayfinding for campus navigation.<br>
       Tap below to enable camera and GPS sensors.
     </p>
-    <button id="start-btn" style="
-      margin-top:30px;padding:18px 40px;font-size:20px;
-      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-      color:white;border:none;border-radius:50px;cursor:pointer;
-      box-shadow:0 8px:25px rgba(102,126,234,0.4);">
+    <button id="start-btn" class="start-btn">
       Start AR Experience
     </button>
   </div>
@@ -216,44 +32,16 @@
   <!-- Loading spinner -->
   <div id="loading" class="loading-overlay" style="display:none;">
     <div class="spinner"></div>
-    <p style="margin-top:20px;">Initializing GPS and AR...</p>
+    <p class="loading-text">Initializing GPS and AR...</p>
   </div>
 
   <!-- A-Frame Scene -->
-  <a-scene id="ar-scene" vr-mode-ui="enabled: false">
-    <a-assets>
-      <img id="teardrop-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150'%3E%3Cpath d='M50,10 C20,40 10,80 10,110 C10,140 50,150 50,150 C50,150 90,140 90,110 C90,80 80,40 50,10 Z' fill='%23667eea' stroke='white' stroke-width='3'/%3E%3Ccircle cx='50' cy='90' r='15' fill='rgba(255,255,255,0.8)'/%3E%3C/svg%3E"/>
+  <a-scene id="ar-scene" locar-webcam vr-mode-ui="enabled: false">
+    <a-assets>      
+      <!-- <img id="teardrop-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150'%3E%3Cpath d='M50,10 C20,40 10,80 10,110 C10,140 50,150 50,150 C50,150 90,140 90,110 C90,80 80,40 50,10 Z' fill='%23667eea' stroke='white' stroke-width='3'/%3E%3Ccircle cx='50' cy='90' r='15' fill='rgba(255,255,255,0.8)'/%3E%3C/svg%3E"/> -->
+      <img src="assets/map-marker.png" id="map-marker" />
     </a-assets>
-
-    <a-entity id="cameraRig" position="0 0 0">
-      <!-- locar-camera for GPS positioning -->
-      <a-entity locar-camera></a-entity>
-      <!-- Standard A-Frame camera for rendering -->
-      <a-camera rotation-reader></a-camera>
-      
-      <!-- Reticle entity -->
-      <a-entity reticle id="reticle"
-                geometry="primitive: circle; radius: 0.15; segments: 16"
-                material="color: #ff5722; opacity: 0.8; side: double"
-                position="0 0 -3"
-                visible="false">
-      </a-entity>
-      
-      <!-- Arrow indicator for off-screen POI -->
-      <a-entity arrow-indicator id="arrow-indicator"
-                rotation="0 0 0" visible="false">
-        <a-circle color="#ff5722" radius="1" segments="32"
-                  position="0 0 -0.1"
-                  material="opacity:0.9;side:double"></a-circle>
-        <a-cone color="#ff5722" height="1.5" radius-bottom="0.5" radius-top="0"
-                position="0 0.75 -0.3"
-                rotation="180 0 0">
-        </a-cone>
-      </a-entity>
-
-      <!-- POI container -->
-      <a-entity id="poi-container"></a-entity>
-    </a-entity>
+<a-camera look-controls='magicWindowTrackingEnabled: false' wasd-controls locar-camera></a-camera>
   </a-scene>
 
   <!-- UI Overlay -->
@@ -291,14 +79,11 @@
         <div id="card-icon" class="location-icon">📍</div>
         <span id="card-distance"></span>
       </div>
-      <p id="card-description" style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.08);font-size:14px;line-height:1.5;color:#555;display:none;"></p>
+      <p id="card-description" class="card-description"></p>
     </div>
   </div>
 
   <div class="version-display" id="version-display">v2.0.0-dev</div>
-
-  <!-- Custom POI marker component -->
-  <script type="module" src="./src/poi-marker-component.js"></script>
 
   <!-- Main application script -->
   <script type="module">
@@ -324,23 +109,6 @@
         });
       }
     });
-
-    // Redirect console.log to visible debug panel on mobile
-    const debugLogEl = document.getElementById('debug-log');
-    if (debugLogEl) {
-      const originalLog = console.log;
-      console.log = function(...args) {
-        originalLog.apply(console, args);
-        
-        const msg = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
-        debugLogEl.textContent += '\n> ' + msg;
-        // Keep only last 5 lines
-        const lines = debugLogEl.textContent.split('\n');
-        if (lines.length > 7) {
-          debugLogEl.textContent = lines.slice(-6).join('\n');
-        }
-      };
-    }
   </script>
 
   <!-- Debug panel for marker information -->
@@ -349,7 +117,7 @@
     <span id="debug-gps">GPS: --</span><br>
     <span id="debug-markers">Markers created: 0</span><br>
     <span id="debug-cam">Camera: ready</span><br>
-    <div id="debug-log" style="margin-top:8px;font-size:11px;"></div>
+    <div id="debug-log" class="debug-log"></div>
   </div>
 </body>
 </html>
