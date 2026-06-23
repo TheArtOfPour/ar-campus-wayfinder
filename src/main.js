@@ -12,6 +12,7 @@ let firstLocation = true;
 // Get DOM elements
 const locarCamera = document.querySelector('[locar-camera]');
 const scene = document.querySelector('a-scene');
+const loadingEl = document.getElementById('loading');
 
 // Store POI entities
 const poiEntities = {};
@@ -29,15 +30,14 @@ async function initGPS() {
     await app.start();
     console.log('[initGPS] LocAR app started');
 
-    // Set initial fake GPS if we have locations
-    if (locations.length > 0) {
-      const originLocation = locations[0];
-      app.fakeGps(originLocation.lng, originLocation.lat, 0, 10);
-      console.log(`[initGPS] Set fake GPS to: ${originLocation.lat}, ${originLocation.lng}`);
-    }
-
+    // Don't fake GPS - just start the real GPS
     await app.startGps();
     console.log('[initGPS] GPS started');
+
+    // Show loading message while waiting for GPS signal
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+    }
 
     // Listen for GPS updates using addEventListener pattern
     const onGPSUpdate = (e) => {
@@ -50,6 +50,11 @@ async function initGPS() {
       if (lat !== 0 && lng !== 0 && firstLocation) {
         console.log(`[GPS] Got initial location: lat ${lat}, lng ${lng}`);
         firstLocation = false;
+        
+        // Hide loading screen
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
         
         // Remove listener to avoid duplicates
         locarCamera.removeEventListener('gpsupdate', onGPSUpdate);
@@ -158,6 +163,12 @@ async function init() {
     console.log('[init] AR Wayfinder initialized successfully');
   } catch (error) {
     console.error('[init] Initialization error:', error);
+    
+    // Hide loading screen on error
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
+    }
+    
     alert(`Failed to initialize AR: ${error.message}`);
   }
 }
