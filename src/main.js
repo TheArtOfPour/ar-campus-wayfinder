@@ -42,21 +42,19 @@ function createPOIs() {
       color: colors[i % colors.length],
       opacity: 0.75
     });
-    box.setAttribute('position', '0 0.5 0'); // Adjust to center box at GPS point
-    box.setAttribute('scale', '2 1 2'); // Smaller, visible boxes (height 1 for ground alignment)
+    box.setAttribute('position', '0 0.5 0'); // Box sits on ground, half-height up
+    box.setAttribute('scale', '2 1 2');
     
     entity.appendChild(box);
     
-    // Add name text above the marker
+    // Add name text above the marker - simpler approach without look-at
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
     text.setAttribute('anchor', 'center');
-    text.setAttribute('baseline', 'middle'); // Changed from bottom to middle for better centering
-    text.setAttribute('position', '0 1.5 0'); // Position above the box (box is at 0.5, height 1 = top at 1.5)
-    text.setAttribute('scale', '3 3 3'); // Smaller scale for better visibility
-    // Billboard effect: text always faces camera
-    text.setAttribute('look-at', '[locar-camera]');
+    text.setAttribute('baseline', 'middle');
+    text.setAttribute('position', '0 1.8 0'); // Position above box
+    text.setAttribute('scale', '2 2 2'); // Smaller scale
     entity.appendChild(text);
     
     scene.appendChild(entity);
@@ -64,13 +62,16 @@ function createPOIs() {
     poiEntities[loc.id] = {
       el: entity,
       location: loc
-    };    
+    };
+    
+    console.log(`[createPOIs] Created marker for ${loc.name} at lat=${loc.lat}, lng=${loc.lng}`);
   }
+
+  console.log('[createPOIs] Done creating POI markers');
 }
 
 // GPS update handler - called when locar-camera gets GPS data
 function onGPSUpdate(e) {
-  
   const lat = e.detail.position.coords.latitude;
   const lng = e.detail.position.coords.longitude;
 
@@ -78,6 +79,8 @@ function onGPSUpdate(e) {
   if (lat === 0 && lng === 0) {
     return;
   }
+
+  console.log(`[GPS] Got location: lat=${lat}, lng=${lng}`);
 
   if (firstLocation) {
     firstLocation = false;
