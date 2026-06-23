@@ -43,7 +43,7 @@ function createPOIs() {
       opacity: 0.75
     });
     box.setAttribute('position', '0 1 0');
-    box.setAttribute('scale', '3 3 3'); // Smaller, visible boxes
+    box.setAttribute('scale', '2 2 2'); // Smaller, visible boxes
     
     entity.appendChild(box);
     
@@ -53,7 +53,7 @@ function createPOIs() {
     text.setAttribute('color', '#000');
     // text.setAttribute('width', 4);
     text.setAttribute('position', '0 2 0');
-    text.setAttribute('scale', '6 6 6'); 
+    text.setAttribute('scale', '10 10 10'); 
     // Billboard effect: text always faces camera
     text.setAttribute('look-at', '[locar-camera]');
     entity.appendChild(text);
