@@ -17,6 +17,28 @@ const loadingEl = document.getElementById('loading');
 // Store POI entities
 const poiEntities = {};
 
+// GPS smoothing - store recent positions and average them
+const gpsHistory = [];
+const GPS_HISTORY_SIZE = 5; // Average last 5 positions
+
+function addGPSPosition(lat, lng) {
+  gpsHistory.push({ lat, lng });
+  if (gpsHistory.length > GPS_HISTORY_SIZE) {
+    gpsHistory.shift();
+  }
+  
+  // Return averaged position
+  const sum = gpsHistory.reduce((acc, pos) => ({
+    lat: acc.lat + pos.lat,
+    lng: acc.lng + pos.lng
+  }), { lat: 0, lng: 0 });
+  
+  return {
+    lat: sum.lat / gpsHistory.length,
+    lng: sum.lng / gpsHistory.length
+  };
+}
+
 function createPOIs() {
   console.log('[createPOIs] Creating POI markers...');
 
@@ -36,25 +58,25 @@ function createPOIs() {
       longitude: loc.lng
     });
     
-    // Add visual marker - smaller box for visibility
+    // Add visual marker - larger box for visibility
     const box = document.createElement('a-box');
     box.setAttribute('material', {
       color: colors[i % colors.length],
       opacity: 0.75
     });
-    box.setAttribute('position', '0 0.5 0'); // Box sits on ground, half-height up
-    box.setAttribute('scale', '2 1 2');
+    box.setAttribute('position', '0 1 0'); // Box sits on ground, half-height up (height=2)
+    box.setAttribute('scale', '3 2 3'); // Larger boxes (3x width/depth, 2x height)
     
     entity.appendChild(box);
     
-    // Add name text above the marker - A-Frame text defaults to facing negative Z (up)
+    // Add name text above the marker
     const text = document.createElement('a-text');
     text.setAttribute('value', loc.name);
     text.setAttribute('color', '#000');
     text.setAttribute('anchor', 'center');
     text.setAttribute('baseline', 'middle');
-    text.setAttribute('position', '0 1.8 0'); // Position above box
-    text.setAttribute('scale', '2 2 2');
+    text.setAttribute('position', '0 3.5 0'); // Position above box (box top is at y=2, text baseline at y=3.5)
+    text.setAttribute('scale', '4 4 4'); // Larger scale for readability
     entity.appendChild(text);
     
     scene.appendChild(entity);
@@ -72,15 +94,18 @@ function createPOIs() {
 
 // GPS update handler - called when locar-camera gets GPS data
 function onGPSUpdate(e) {
-  const lat = e.detail.position.coords.latitude;
-  const lng = e.detail.position.coords.longitude;
+  const rawLat = e.detail.position.coords.latitude;
+  const rawLng = e.detail.position.coords.longitude;
 
   // Ignore default 0,0 location
-  if (lat === 0 && lng === 0) {
+  if (rawLat === 0 && rawLng === 0) {
     return;
   }
 
-  console.log(`[GPS] Got location: lat=${lat}, lng=${lng}`);
+  // Apply smoothing
+  const { lat, lng } = addGPSPosition(rawLat, rawLng);
+  
+  console.log(`[GPS] Raw: ${rawLat.toFixed(6)},${rawLng.toFixed(6)} | Smoothed: ${lat.toFixed(6)},${lng.toFixed(6)}`);
 
   if (firstLocation) {
     firstLocation = false;
