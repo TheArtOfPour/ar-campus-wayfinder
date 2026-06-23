@@ -53,6 +53,8 @@ function createPOIs() {
     text.setAttribute('width', 4);
     text.setAttribute('position', '0 3.5 0');
     text.setAttribute('scale', '3 4 3'); 
+    // Billboard effect: text always faces camera
+    text.setAttribute('look-at', '[locar-camera]');
     entity.appendChild(text);
     
     scene.appendChild(entity);
