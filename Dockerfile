@@ -18,8 +18,8 @@ RUN npm run build
 # Production stage - use nginx:alpine with SSL support
 FROM nginx:alpine
 
-# Install certbot for Let's Encrypt
-RUN apk add --no-cache certbot
+# Install certbot and openssl for SSL support
+RUN apk add --no-cache certbot openssl
 
 # Copy built app from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
