@@ -6,7 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy source files
+# Copy all source files including scripts
+COPY scripts/ ./scripts/
 COPY src/ ./src/
 COPY public/ ./public/
 COPY index.html ./
