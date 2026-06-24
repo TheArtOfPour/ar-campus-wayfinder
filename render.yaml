@@ -1,5 +1,16 @@
+name: ar-campus-wayfinder
+
 services:
   - type: web
-    name: ar-campus-wayfinder
-    buildCommand: npm install && npm run build
-    staticOutputDir: dist
+    name: ar-wayfinder
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    repo: https://github.com/TheArtOfPour/ar-campus-wayfinder
+    branch: main
+    buildCommand: npm run build
+    startCommand: npx serve -s dist -l $PORT
+    environment:
+      NODE_ENV: production
+    regions:
+      - aws:us-east-1
