@@ -2,9 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies first (better caching)
+# Install build dependencies (git for version, node-gyp, etc.)
+RUN apk add --no-cache git python3 make g++
+
+# Copy package files first for better caching
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci && npm cache clean --force
 
 # Copy all source files including scripts
 COPY scripts/ ./scripts/
