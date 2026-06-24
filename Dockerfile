@@ -15,21 +15,29 @@ COPY index.html ./
 
 RUN npm run build
 
-# Production stage
+# Production stage - use nginx:alpine with SSL support
 FROM nginx:alpine
+
+# Install certbot for Let's Encrypt
+RUN apk add --no-cache certbot
 
 # Copy built app from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Create directories for Let's Encrypt challenges
+# Create directories for Let's Encrypt challenges and self-signed certs
 RUN mkdir -p /var/www/html/.well-known/acme-challenge && \
-    mkdir -p /etc/letsencrypt/{live,archive}
-
-# Set proper permissions
-RUN chown -R nginx:nginx /var/www/html && \
+    mkdir -p /etc/letsencrypt/{live,archive} && \
+    chown -R nginx:nginx /var/www/html && \
     chown -R nginx:nginx /etc/letsencrypt
 
-# Nginx config
+# Generate self-signed certificate as fallback
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/selfsigned.key \
+        -out /etc/nginx/ssl/selfsigned.crt \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" 2>/dev/null
+
+# Nginx config with fallback to self-signed cert
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY <<'EOF' /etc/nginx/conf.d/ar-wayfinder.conf
@@ -53,12 +61,12 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
     server_name _;
 
-    # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/app.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.yourdomain.com/privkey.pem;
+    # SSL configuration - try Let's Encrypt first, fallback to self-signed
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME:-localhost}/fullchain.pem 2>/dev/null || /etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME:-localhost}/privkey.pem 2>/dev/null || /etc/nginx/ssl/selfsigned.key;
     ssl_session_timeout 1d;
     ssl_session_cache shared:MozSSL:10m;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -74,17 +82,10 @@ server {
         proxy_cache_bypass $http_upgrade;
         proxy_buffering off;
     }
-
-    # Serve static files directly
-    location /dist/ {
-        alias /usr/share/nginx/html/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
 }
 EOF
 
-# Create entrypoint script that handles both SSL and non-SSL cases
+# Create entrypoint script
 COPY <<'SCRIPT' /entrypoint.sh
 #!/bin/sh
 
@@ -92,22 +93,31 @@ DOMAIN="${DOMAIN_NAME:-localhost}"
 EMAIL="${ADMIN_EMAIL:-admin@localhost}"
 
 echo "Starting AR Wayfinder..."
+echo "Domain: ${DOMAIN}"
 
-# Only try to get Let's Encrypt cert if we have a valid domain
+# Only try to get Let's Encrypt cert if we have a valid domain (not localhost)
 if [ "$DOMAIN" != "localhost" ] && [ -n "$DOMAIN" ]; then
     # Try to obtain/renew certificate
     if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
         echo "Attempting Let's Encrypt certificate for ${DOMAIN}..."
-        certbot certonly --webroot -w /var/www/html \
+        
+        # Create webroot directory if needed
+        mkdir -p /var/www/html/.well-known/acme-challenge
+        
+        certbot certonly --webroot \
+            -w /var/www/html \
             -d "$DOMAIN" \
             --non-interactive \
             --agree-tos \
             --email "$EMAIL" \
             --server https://acme-v02.api.letsencrypt.org/directory 2>&1 || true
     fi
+    
+    # Try to renew certificate if it exists and is close to expiration
+    certbot renew --quiet 2>/dev/null || true
 fi
 
-# Start nginx
+# Start nginx in foreground
 nginx -g 'daemon off;'
 SCRIPT
 
