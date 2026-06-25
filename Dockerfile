@@ -36,8 +36,47 @@ RUN set -e && \
         -out /etc/nginx/ssl/selfsigned.crt \
         -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" 2>/dev/null || true
 
-# Replace default nginx config with our custom one
-COPY Dockerfile.nginx /etc/nginx/conf.d/default.conf
+# Replace default nginx config with our custom one (inline)
+RUN rm /etc/nginx/conf.d/default.conf
+
+COPY <<'EOF' /etc/nginx/conf.d/ar-wayfinder.conf
+upstream ar_wayfinder_backend {
+    server 127.0.0.1:3000;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name _;
+
+    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:MozSSL:10m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+EOF
 
 # Create entrypoint script that handles both domain and IP scenarios
 COPY <<'SCRIPT' /entrypoint.sh
