@@ -28,6 +28,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 RUN mkdir -p /var/www/html/.well-known/acme-challenge && \
     chown -R nginx:nginx /var/www/html
 
+# Add cache-busting file with timestamp to force rebuild
+RUN echo "Build $(date +%Y%m%d%H%M%S)" > /usr/share/nginx/html/.build-info
+
 # Generate self-signed certificate as fallback (with proper error handling)
 RUN set -e && \
     mkdir -p /etc/nginx/ssl && \
