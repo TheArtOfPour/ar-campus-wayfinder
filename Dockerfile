@@ -1,4 +1,4 @@
-# Build stage
+# Build stage - build the app
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -15,7 +15,7 @@ COPY index.html ./
 
 RUN npm run build
 
-# Production stage - use nginx:alpine with SSL support
+# Production stage - serve static files directly via nginx
 FROM nginx:alpine
 
 # Install certbot and openssl for SSL support
@@ -26,65 +26,18 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Create directories for Let's Encrypt challenges and self-signed certs
 RUN mkdir -p /var/www/html/.well-known/acme-challenge && \
-    mkdir -p /etc/letsencrypt/{live,archive} && \
-    chown -R nginx:nginx /var/www/html && \
-    chown -R nginx:nginx /etc/letsencrypt
+    chown -R nginx:nginx /var/www/html
 
-# Generate self-signed certificate as fallback
-RUN mkdir -p /etc/nginx/ssl && \
+# Generate self-signed certificate as fallback (with proper error handling)
+RUN set -e && \
+    mkdir -p /etc/nginx/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/selfsigned.key \
         -out /etc/nginx/ssl/selfsigned.crt \
-        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" 2>/dev/null
+        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" 2>/dev/null || true
 
-# Nginx config with fallback to self-signed cert
-RUN rm /etc/nginx/conf.d/default.conf
-
-COPY <<'EOF' /etc/nginx/conf.d/ar-wayfinder.conf
-upstream ar_wayfinder_backend {
-    server 127.0.0.1:3000;
-}
-
-server {
-    listen 80;
-    server_name _;
-
-    # Let's Encrypt challenge handler
-    location /.well-known/acme-challenge/ {
-        root /var/www/html;
-    }
-
-    # Redirect all other HTTP traffic to HTTPS
-    location / {
-        return 301 https://$host$request_uri;
-    }
-}
-
-server {
-    listen 443 ssl;
-    server_name _;
-
-    # SSL configuration - try Let's Encrypt first, fallback to self-signed
-    # SSL configuration - use self-signed certificate for IP-based access
-    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
-    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
-    ssl_session_timeout 1d;
-    ssl_session_cache shared:MozSSL:10m;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_prefer_server_ciphers off;
-
-    location / {
-        proxy_pass http://ar_wayfinder_backend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_buffering off;
-    }
-}
-EOF
+# Replace default nginx config with our custom one
+COPY Dockerfile.nginx /etc/nginx/conf.d/default.conf
 
 # Create entrypoint script that handles both domain and IP scenarios
 COPY <<'SCRIPT' /entrypoint.sh
@@ -97,7 +50,7 @@ echo "Starting AR Wayfinder..."
 echo "Domain: ${DOMAIN}"
 
 # Skip Let's Encrypt if using IP address or localhost
-if [ "$DOMAIN" != "localhost" ] && [ -n "$DOMAIN" ] && ! echo "$DOMAIN" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+if [ "$DOMAIN" != "localhost" ] && [ -n "$DOMAIN" ] && ! echo "$DOMAIN" | grep -qE '^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$'; then
     # Try to obtain/renew certificate
     if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
         echo "Attempting Let's Encrypt certificate for ${DOMAIN}..."
