@@ -65,8 +65,9 @@ server {
     server_name _;
 
     # SSL configuration - try Let's Encrypt first, fallback to self-signed
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME:-localhost}/fullchain.pem 2>/dev/null || /etc/nginx/ssl/selfsigned.crt;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME:-localhost}/privkey.pem 2>/dev/null || /etc/nginx/ssl/selfsigned.key;
+    # SSL configuration - use self-signed certificate for IP-based access
+    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
     ssl_session_timeout 1d;
     ssl_session_cache shared:MozSSL:10m;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -85,7 +86,7 @@ server {
 }
 EOF
 
-# Create entrypoint script
+# Create entrypoint script that handles both domain and IP scenarios
 COPY <<'SCRIPT' /entrypoint.sh
 #!/bin/sh
 
@@ -95,8 +96,8 @@ EMAIL="${ADMIN_EMAIL:-admin@localhost}"
 echo "Starting AR Wayfinder..."
 echo "Domain: ${DOMAIN}"
 
-# Only try to get Let's Encrypt cert if we have a valid domain (not localhost)
-if [ "$DOMAIN" != "localhost" ] && [ -n "$DOMAIN" ]; then
+# Skip Let's Encrypt if using IP address or localhost
+if [ "$DOMAIN" != "localhost" ] && [ -n "$DOMAIN" ] && ! echo "$DOMAIN" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
     # Try to obtain/renew certificate
     if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
         echo "Attempting Let's Encrypt certificate for ${DOMAIN}..."
