@@ -1,6 +1,6 @@
 {
   "name": "ar-campus-wayfinder",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "AR Campus Wayfinder using LocAR.js and A-Frame",
   "type": "module",
   "scripts": {
