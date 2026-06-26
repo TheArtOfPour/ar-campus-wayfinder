@@ -10,6 +10,9 @@
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
   <!-- LocAR-AFrame for GPS positioning -->
+  <script type="module">
+    import 'locar-aframe';
+  </script>
 
   <!-- A-Frame Debugger -->
   <script src="https://cdn.jsdelivr.net/npm/aframe-debugger@0.6.0/dist/aframe-debugger.min.js"></script>
@@ -17,42 +20,11 @@
   <!-- A-Frame Inspector -->
   <script src="https://cdn.jsdelivr.net/npm/aframe-inspector@1.3.2/dist/aframe-inspector.min.js"></script>
 
-  <!-- Confetti animation script -->
-  <style>
-    @keyframes confetti-fall {
-      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(360deg); opacity: 0.8; }
-    }
-
-    .confetti-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 9999;
-      overflow: hidden;
-    }
-
-    .confetti {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background-color: #f00;
-      animation: confetti-fall linear infinite;
-      top: -20px;
-    }
-  </style>
-  <script type="module" crossorigin src="./assets/index-DkWusKxP.js"></script>
 </head>
 <body>
-  <!-- Confetti animation container -->
-  <div id="confetti-container" class="confetti-container"></div>
-
   <!-- Start button overlay -->
   <div id="start-overlay" class="loading-overlay">
-    <h1 class="start-title">Congratulations BTC Students!</h1>
+    <h1 class="start-title">Campus Wayfinder v3</h1>
     <p class="start-description">
       Augmented reality wayfinding for campus navigation.<br>
       Tap below to enable camera and GPS sensors.
@@ -137,5 +109,48 @@
   <div class="version-display" id="version-display">v3.0.0-dev</div>
 
   <!-- Main application script -->
+  <script type="module">
+    import { initARApp } from './src/main.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const startBtn = document.getElementById('start-btn');
+      const startOverlay = document.getElementById('start-overlay');
+      const loading = document.getElementById('loading');
+      const mockGPSCheckbox = document.getElementById('mock-gps-toggle');
+
+      if (startBtn) {
+        startBtn.addEventListener('click', async () => {
+          startOverlay.style.display = 'none';
+          loading.style.display = 'flex';
+
+          try {
+            // If mock GPS is enabled, inject mock data into window for the app to use
+            if (mockGPSCheckbox && mockGPSCheckbox.checked) {
+              console.log('[Mock GPS] Enabling mock location mode');
+              window.mockGPSLocation = { lat: 48.7650, lng: -122.5100 };
+            }
+            
+            await initARApp();
+          } catch (error) {
+            console.error('Failed to initialize:', error);
+          }
+
+          loading.style.display = 'none';
+        });
+      }
+    });
+    
+    // Keyboard shortcuts for debugging
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'i' || e.key === 'I') {
+        const inspectorEl = document.querySelector('[inspector]');
+        if (inspectorEl && inspectorEl.components['inspector']) {
+          inspectorEl.components['inspector'].toggle();
+        } else {
+          console.log('Press Ctrl+Shift+I to open DevTools');
+        }
+      }
+    });
+  </script>
 </body>
 </html>
