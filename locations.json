@@ -1,0 +1,50 @@
+[
+  {
+    "id": "building-a",
+    "name": "HC",
+    "lat": 48.76493902606986,
+    "lng": -122.5102771303933,
+    "description": "Haskell Center",
+    "icon": null
+  },
+  {
+    "id": "building-b",
+    "name": "CS",
+    "lat": 48.76517874251886,
+    "lng": -122.5090488989137,
+    "description": "College Services",
+    "icon": null
+  },
+  {
+    "id": "building-c",
+    "name": "CC",
+    "lat": 48.76562014758625,
+    "lng": -122.51045768889969,
+    "description": "Campus Center",
+    "icon": null
+  },
+  {
+    "id": "field",
+    "name": "MC",
+    "lat": 48.766928218600846,
+    "lng": -122.50853234258545,
+    "description": "",
+    "icon": null
+  },
+  {
+    "id": "auditorium",
+    "name": "DMC",
+    "lat": 48.765794902908155,
+    "lng": -122.50860865204304,
+    "description": "",
+    "icon": null
+  },
+  {
+    "id": "engineering",
+    "name": "A",
+    "lat": 48.765686889960215,
+    "lng": -122.51286437179239,
+    "description": "",
+    "icon": null
+  }
+]
